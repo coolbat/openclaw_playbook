@@ -1,0 +1,126 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import PageHero from "@/components/PageHero.astro";
+import SectionHeading from "@/components/SectionHeading.astro";
+import QuickStartCard from "@/components/QuickStartCard.astro";
+import ArticleCard from "@/components/ArticleCard.astro";
+import { adsConfig, isAdSlotEnabled } from "@/config/ads";
+import { homeConfig } from "@/config/home";
+import { defaultLocale } from "@/config/site";
+import { getLocalizedCollection, getRouteSlug } from "@/lib/content";
+import { localizePath } from "@/lib/i18n";
+
+const locale = defaultLocale;
+const quickStart = await getLocalizedCollection("quickStart", locale);
+const learnEntries = await getLocalizedCollection("learn", locale);
+const templateEntries = await getLocalizedCollection("templates", locale);
+const troubleshootEntries = await getLocalizedCollection("troubleshoot", locale);
+const learn = learnEntries.slice(0, 3);
+const templates = templateEntries.slice(0, 3);
+const troubleshoot = troubleshootEntries.slice(0, 3);
+const homeAd = adsConfig.slots.home_between_sections.content.en;
+---
+
+<BaseLayout
+  active="home"
+  description={homeConfig.hero.summary.en}
+  locale={locale}
+  path="/"
+  title="AnyPlaybook | Tutorial Template"
+>
+  <PageHero
+    className="hero"
+    ctas={[
+      { href: "#quick-start", label: "Open 5-step Quick Start", variant: "primary" },
+      { href: localizePath("/learn/", locale), label: "Browse Learn", variant: "secondary" },
+    ]}
+    highlights={[
+      "Bilingual routing included",
+      "Theme + locale controls ready",
+      "Structured content collections",
+    ]}
+    kicker={homeConfig.hero.kicker}
+    summary={homeConfig.hero.summary.en}
+    title={homeConfig.hero.title.en}
+    aside={homeConfig.hero.aside.en}
+  />
+
+  <section class="section" id="quick-start">
+    <SectionHeading title={homeConfig.quickStartIntro.title.en} summary={homeConfig.quickStartIntro.summary.en} />
+    <div class="grid cols-2">
+      {quickStart.map((entry) => (
+        <QuickStartCard entry={entry.data} href={localizePath(`/quick-start/${getRouteSlug(entry)}/`, locale)} />
+      ))}
+    </div>
+  </section>
+
+  <section class="section">
+    <SectionHeading
+      actionHref={localizePath("/learn/", locale)}
+      actionLabel={`Open Learn hub (${learnEntries.length})`}
+      summary={homeConfig.learnIntro.summary.en}
+      title={homeConfig.learnIntro.title.en}
+    />
+    <div class="grid cols-3">
+      {learn.map((entry) => (
+        <ArticleCard
+          eyebrow={entry.data.category}
+          href={localizePath(`/learn/${getRouteSlug(entry)}/`, locale)}
+          summary={entry.data.summary}
+          title={entry.data.title}
+        />
+      ))}
+    </div>
+  </section>
+
+  {isAdSlotEnabled("home_between_sections") && (
+    <section class="ad-preview-banner section">
+      <div class="ad-preview-copy">
+        <p class="eyebrow">{homeAd.label}</p>
+        <h2>{homeAd.title}</h2>
+        <p>{homeAd.summary}</p>
+      </div>
+      <a class="btn secondary ad-preview-action" href={localizePath(homeAd.href, locale)}>
+        {homeAd.ctaLabel}
+      </a>
+    </section>
+  )}
+
+  <section class="section">
+    <SectionHeading
+      actionHref={localizePath("/templates/", locale)}
+      actionLabel={`Browse templates (${templateEntries.length})`}
+      summary={homeConfig.templatesIntro.summary.en}
+      title={homeConfig.templatesIntro.title.en}
+    />
+    <div class="grid cols-3">
+      {templates.map((entry) => (
+        <ArticleCard
+          eyebrow={`${entry.data.difficulty} · ${entry.data.time}`}
+          href={localizePath(`/templates/${getRouteSlug(entry)}/`, locale)}
+          summary={entry.data.summary}
+          title={entry.data.title}
+        />
+      ))}
+    </div>
+  </section>
+
+  <section class="section">
+    <SectionHeading
+      actionHref={localizePath("/troubleshoot/", locale)}
+      actionLabel={`Open troubleshoot (${troubleshootEntries.length})`}
+      summary={homeConfig.troubleshootIntro.summary.en}
+      title={homeConfig.troubleshootIntro.title.en}
+    />
+    <div class="grid cols-3">
+      {troubleshoot.map((entry) => (
+        <ArticleCard
+          eyebrow={entry.data.symptom}
+          href={localizePath(`/troubleshoot/${getRouteSlug(entry)}/`, locale)}
+          summary={entry.data.summary}
+          title={entry.data.title}
+        />
+      ))}
+    </div>
+  </section>
+</BaseLayout>

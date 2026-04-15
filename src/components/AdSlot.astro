@@ -1,0 +1,29 @@
+---
+import { adsConfig, type AdSlotKey } from "@/config/ads";
+import type { Locale } from "@/config/site";
+import { localizePath } from "@/lib/i18n";
+
+const { slot, locale, className } = Astro.props as {
+  slot: AdSlotKey;
+  locale: Locale;
+  className?: string;
+};
+
+const slotConfig = adsConfig.slots[slot];
+const isVisible = adsConfig.enabled && slotConfig.enabled;
+const content = slotConfig.content[locale];
+const href = content.href.startsWith("http://") || content.href.startsWith("https://") ? content.href : localizePath(content.href, locale);
+---
+
+{
+  isVisible && (
+    <div class:list={["ad-slot", `ad-slot-${slotConfig.variant}`, className]}>
+      <p class="eyebrow ad-slot-label">{content.label}</p>
+      <h3 class="ad-slot-title">{content.title}</h3>
+      <p class="ad-slot-summary">{content.summary}</p>
+      <a class="btn secondary ad-slot-cta" href={href}>
+        {content.ctaLabel}
+      </a>
+    </div>
+  )
+}

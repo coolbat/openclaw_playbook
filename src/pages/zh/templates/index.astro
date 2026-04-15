@@ -1,0 +1,59 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import PageHero from "@/components/PageHero.astro";
+import ArticleCard from "@/components/ArticleCard.astro";
+import { getLocalizedCollection, getRouteSlug, getUniqueCategories } from "@/lib/content";
+import { localizePath } from "@/lib/i18n";
+
+const locale = "zh";
+const entries = await getLocalizedCollection("templates", locale);
+const categories = getUniqueCategories(entries);
+---
+
+<BaseLayout active="templates" description="模板库模板页。" locale={locale} path="/templates/" title="Templates | AnyPlaybook">
+  <PageHero
+    className="page-hero hero-single"
+    highlights={[
+      `${entries.length} 个模板示例`,
+      "已带难度与耗时标记",
+      "双语详情页可直接复用",
+    ]}
+    kicker="TEMPLATE LIBRARY"
+    summary="按实际目标组织的工作流模板，并附带难度、耗时和风险提示。"
+    title="从一个可复用工作流开始。"
+  />
+  <div class="filter-rail" data-filter-group="templates">
+    <button class="filter-button is-active" data-filter="all" type="button">全部分类</button>
+    {categories.map((category) => (
+      <button class="filter-button" data-filter={category} type="button">{category}</button>
+    ))}
+  </div>
+  <div class="grid cols-3">
+    {entries.map((entry) => (
+      <div data-filter-item={entry.data.category}>
+        <ArticleCard eyebrow={`${entry.data.difficulty} · ${entry.data.time}`} href={localizePath(`/templates/${getRouteSlug(entry)}/`, locale)} summary={entry.data.summary} title={entry.data.title} />
+      </div>
+    ))}
+  </div>
+
+  <script is:inline>
+    (() => {
+      const group = document.querySelector('[data-filter-group="templates"]');
+      const items = Array.from(document.querySelectorAll("[data-filter-item]"));
+      if (!(group instanceof HTMLElement) || items.length === 0) return;
+
+      const buttons = Array.from(group.querySelectorAll("[data-filter]"));
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+          if (!(button instanceof HTMLElement)) return;
+          const value = button.dataset.filter ?? "all";
+          buttons.forEach((item) => item.classList.toggle("is-active", item === button));
+          items.forEach((item) => {
+            if (!(item instanceof HTMLElement)) return;
+            item.hidden = value !== "all" && item.dataset.filterItem !== value;
+          });
+        });
+      });
+    })();
+  </script>
+</BaseLayout>

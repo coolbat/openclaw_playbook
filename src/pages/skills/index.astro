@@ -1,0 +1,22 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import PageHero from "@/components/PageHero.astro";
+import SkillsPanel from "@/components/SkillsPanel.astro";
+
+const locale = "en";
+---
+
+<BaseLayout active="skills" description="Curated resources directory for tutorial sites." locale={locale} path="/skills/" title="Resources | AnyPlaybook">
+  <PageHero
+    className="page-hero hero-single"
+    highlights={[
+      "Grouped by real tasks",
+      "Swap in tools or resources",
+      "Bilingual directory pattern",
+    ]}
+    kicker="CURATED RESOURCES"
+    summary="An example directory pattern for tools, resources, references, or recommended stacks that tutorial sites may want to group by task."
+    title="A reusable resources directory."
+  />
+  <SkillsPanel locale={locale} />
+</BaseLayout>

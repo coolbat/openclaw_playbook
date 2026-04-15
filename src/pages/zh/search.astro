@@ -1,0 +1,57 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+const locale = "zh";
+---
+
+<BaseLayout active="none" description="搜索教程、模板与排错内容。" locale={locale} path="/search/" title="搜索 | AnyPlaybook">
+  <Fragment slot="head">
+    <link href="/pagefind/pagefind-ui.css" rel="stylesheet" />
+  </Fragment>
+
+  <section class="section search-page">
+    <div class="search-shell card">
+      <p class="eyebrow">SEARCH</p>
+      <h1>更快找到下一条有用答案。</h1>
+      <p class="sub">在 Quick Start、Learn、Templates 和 Troubleshoot 之间统一搜索，不需要离开这个静态站点。</p>
+      <div class="search-root" id="search-root">
+        <p class="search-loading">正在加载搜索…</p>
+      </div>
+    </div>
+  </section>
+
+  <script is:inline>
+    const initSearch = async () => {
+      const root = document.querySelector("#search-root");
+      if (!(root instanceof HTMLElement) || root.dataset.ready === "true") return;
+
+      try {
+        const PagefindUI = await import("/pagefind/pagefind-ui.js");
+        new PagefindUI.default({
+          element: "#search-root",
+          bundlePath: "/pagefind/",
+          showImages: false,
+          showSubResults: true,
+          resetStyles: false,
+          autofocus: true,
+          translations: {
+            placeholder: "搜索教程、模板和排错内容",
+            zero_results: "暂时没有结果，试试症状、主题或标签。",
+            clear_search: "清除搜索",
+            load_more: "加载更多结果",
+          },
+        });
+        root.dataset.ready = "true";
+      } catch (error) {
+        root.innerHTML = '<p class="search-loading">搜索加载失败。请先运行 <code>npm run build</code>，再刷新页面。</p>';
+        console.error("Failed to initialize search", error);
+      }
+    };
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initSearch, { once: true });
+    } else {
+      initSearch();
+    }
+  </script>
+</BaseLayout>

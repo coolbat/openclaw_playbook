@@ -1,0 +1,27 @@
+---
+locale: zh
+publishedAt: 2026-04-04
+updatedAt: 2026-04-15
+category: 规范
+title: 分支保护阻止直接 push
+summary: 仓库大概率没有坏，它只是在提醒你该走 Pull Request 流程，而不是直接推主分支。
+symptom: 直接 push 到 main 被拒绝
+readingTime: 5 分钟
+tags:
+  - branch protection
+  - main branch
+checks:
+  - 先确认受保护分支规则
+  - 改用功能分支
+  - 检查是否要求评审后才能合并
+commonCauses:
+  - 受保护分支策略
+  - 状态检查尚未完成
+  - 缺少必要评审
+ctaLabel: 查看第一次 PR 流程
+ctaHref: /zh/quick-start/run-first-workflow/
+---
+
+## 先换个理解方式
+
+直接 push 被拒绝，通常不是仓库坏了，而是仓库在提醒你正确的协作流程。

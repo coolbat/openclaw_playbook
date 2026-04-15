@@ -1,0 +1,27 @@
+---
+locale: en
+publishedAt: 2026-03-31
+updatedAt: 2026-04-15
+category: History
+title: You land in detached HEAD by accident
+summary: Reattach the work to a branch before making more changes or the next checkout may hide it.
+symptom: Git says detached HEAD
+readingTime: 7 min
+tags:
+  - detached head
+  - git checkout
+checks:
+  - Confirm whether commits were made in detached HEAD
+  - Create a branch before leaving the current state
+  - Decide whether the state should become a real branch
+commonCauses:
+  - Checking out a commit hash directly
+  - Inspecting old revisions without branching
+  - Following outdated tutorial commands
+ctaLabel: Review docs near the repo
+ctaHref: /learn/write-docs-next-to-the-repo/
+---
+
+## First principle
+
+Detached HEAD is recoverable if you give the work a branch before moving elsewhere.

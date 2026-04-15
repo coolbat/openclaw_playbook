@@ -1,0 +1,23 @@
+---
+const { entry, href } = Astro.props as {
+  entry: {
+    step: string;
+    title: string;
+    summary: string;
+    bullets: string[];
+  };
+  href: string;
+};
+---
+
+<article class="card quickstart-card">
+  <p class="eyebrow">{entry.step}</p>
+  <h3>{entry.title}</h3>
+  <p>{entry.summary}</p>
+  <ul class="card-bullets">
+    {entry.bullets.slice(0, 3).map((item) => <li>{item}</li>)}
+  </ul>
+  <div class="cta-row">
+    <a class="btn secondary card-link" href={href}>Open guide</a>
+  </div>
+</article>

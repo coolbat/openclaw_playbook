@@ -1,0 +1,27 @@
+---
+locale: en
+publishedAt: 2026-04-04
+updatedAt: 2026-04-15
+category: Policy
+title: Branch protection blocks a direct push
+summary: The repository is probably working as intended. Shift from push-to-main habits into pull-request habits.
+symptom: Direct push to main is rejected
+readingTime: 5 min
+tags:
+  - branch protection
+  - main branch
+checks:
+  - Confirm the protected branch rules
+  - Create a feature branch instead
+  - Check whether reviews are required before merge
+commonCauses:
+  - Protected branch policy
+  - Status checks not finished
+  - Required review missing
+ctaLabel: Review first PR flow
+ctaHref: /quick-start/run-first-workflow/
+---
+
+## Reframe the error
+
+A rejected direct push is usually not a broken repo. It is the repo teaching the workflow.

@@ -1,0 +1,445 @@
+---
+import "@/styles/global.css";
+import { htmlLang, localizePath, switchLocale } from "@/lib/i18n";
+import { defaultLocale, siteConfig, type Locale } from "@/config/site";
+
+type NavKey = "home" | "learn" | "templates" | "skills" | "troubleshoot" | "none";
+
+const {
+  title,
+  description,
+  locale = defaultLocale,
+  path = "/",
+  active = "none",
+  ogType = "website",
+  ogImage = siteConfig.socialImage,
+  publishedAt,
+  updatedAt,
+  robots = "index,follow",
+} = Astro.props as {
+  title: string;
+  description: string;
+  locale?: Locale;
+  path?: string;
+  active?: NavKey;
+  ogType?: "website" | "article";
+  ogImage?: string;
+  publishedAt?: Date;
+  updatedAt?: Date;
+  robots?: string;
+};
+
+const canonical = new URL(localizePath(path, locale), siteConfig.domain).toString();
+const altEn = new URL(localizePath(path, "en"), siteConfig.domain).toString();
+const altZh = new URL(localizePath(path, "zh"), siteConfig.domain).toString();
+const imageUrl = new URL(ogImage, siteConfig.domain).toString();
+const themeOptions = [
+  { key: "light", label: "Light" },
+  { key: "dark", label: "Dark" },
+  { key: "system", label: "System" },
+] as const;
+---
+
+<!doctype html>
+<html lang={htmlLang(locale)}>
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <title>{title}</title>
+    <meta content={description} name="description" />
+    <meta content={robots} name="robots" />
+    <meta content="#f7efe9" media="(prefers-color-scheme: light)" name="theme-color" />
+    <meta content="#1a1413" media="(prefers-color-scheme: dark)" name="theme-color" />
+    <meta content={title} property="og:title" />
+    <meta content={description} property="og:description" />
+    <meta content={canonical} property="og:url" />
+    <meta content={ogType} property="og:type" />
+    <meta content={siteConfig.name} property="og:site_name" />
+    <meta content={imageUrl} property="og:image" />
+    <meta content={title} name="twitter:title" />
+    <meta content={description} name="twitter:description" />
+    <meta content={imageUrl} name="twitter:image" />
+    <meta content="summary_large_image" name="twitter:card" />
+    {publishedAt && <meta content={publishedAt.toISOString()} property="article:published_time" />}
+    {updatedAt && <meta content={updatedAt.toISOString()} property="article:modified_time" />}
+    <script is:inline>
+      (() => {
+        const storageKey = "theme-preference";
+        const root = document.documentElement;
+        const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+        const getStoredTheme = () => {
+          const value = window.localStorage.getItem(storageKey);
+          return value === "light" || value === "dark" || value === "system" ? value : "system";
+        };
+
+        const resolveTheme = (theme) => (theme === "system" ? (mediaQuery.matches ? "dark" : "light") : theme);
+
+        const applyTheme = (theme) => {
+          const resolvedTheme = resolveTheme(theme);
+          root.dataset.theme = resolvedTheme;
+          root.dataset.themePreference = theme;
+          root.style.colorScheme = resolvedTheme;
+        };
+
+        applyTheme(getStoredTheme());
+      })();
+    </script>
+    <link href={canonical} rel="canonical" />
+    <link href={altEn} hreflang="en" rel="alternate" />
+    <link href={altZh} hreflang="zh-CN" rel="alternate" />
+    <link href={altEn} hreflang="x-default" rel="alternate" />
+    <link href="/icon.svg" rel="icon" />
+    <slot name="head" />
+  </head>
+  <body>
+    <div class="site-root">
+      <header class="topbar">
+        <div class="container nav">
+          <div class="nav-left">
+            <a class="brand" href={localizePath("/", locale)}>{siteConfig.name}</a>
+            <nav class="menu">
+              <a class:list={[path === "/" && "is-active"]} href={localizePath("/", locale) + "#quick-start"}>Quick Start</a>
+              {
+                siteConfig.navigation.map((item) => (
+                  <a
+                    class:list={[active === item.key && "is-active"]}
+                    href={localizePath(item.href, locale)}
+                  >
+                    {item.label}
+                  </a>
+                ))
+              }
+            </nav>
+          </div>
+          <div class="nav-right">
+            <button
+              aria-controls="mobile-nav-panel"
+              aria-expanded="false"
+              aria-label="Open navigation menu"
+              class="menu-toggle"
+              data-menu-toggle
+              type="button"
+            >
+              <span class="menu-toggle-bar"></span>
+              <span class="menu-toggle-bar"></span>
+              <span class="menu-toggle-bar"></span>
+            </button>
+            <div class="nav-controls">
+              <a class="search-link" href={localizePath("/search/", locale)}>
+                {locale === "zh" ? "搜索" : "Search"}
+              </a>
+              <div
+                aria-label="Theme"
+                class="theme-switch"
+                data-theme-switch
+                role="group"
+              >
+                {
+                  themeOptions.map(({ key, label }) => (
+                    <button
+                      aria-label={label}
+                      aria-pressed={key === "system" ? "true" : "false"}
+                      class="theme-option"
+                      data-theme-option={key}
+                      title={label}
+                      type="button"
+                    >
+                      <span aria-hidden="true" class="theme-option-icon">
+                        {
+                          key === "light" ? (
+                            <svg fill="none" viewBox="0 0 24 24">
+                              <circle cx="12" cy="12" r="4.25" stroke="currentColor" stroke-width="1.8"></circle>
+                              <path d="M12 2.75v2.5M12 18.75v2.5M21.25 12h-2.5M5.25 12h-2.5M18.54 5.46l-1.77 1.77M7.23 16.77l-1.77 1.77M18.54 18.54l-1.77-1.77M7.23 7.23L5.46 5.46" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"></path>
+                            </svg>
+                          ) : key === "dark" ? (
+                            <svg fill="none" viewBox="0 0 24 24">
+                              <path d="M14.5 3.25a8.75 8.75 0 1 0 6.25 15.87A9.75 9.75 0 1 1 14.5 3.25Z" fill="currentColor"></path>
+                            </svg>
+                          ) : (
+                            <svg fill="none" viewBox="0 0 24 24">
+                              <rect height="11.5" rx="1.75" stroke="currentColor" stroke-width="1.8" width="16" x="4" y="4.5"></rect>
+                              <path d="M9 19.5h6M12 16v3.5" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"></path>
+                            </svg>
+                          )
+                        }
+                      </span>
+                    </button>
+                  ))
+                }
+              </div>
+              <div class="lang-menu" data-lang-menu>
+                <button
+                  aria-expanded="false"
+                  aria-haspopup="true"
+                  aria-label="Language"
+                  class="lang-trigger"
+                  data-lang-trigger
+                  type="button"
+                >
+                  <span>{locale === "zh" ? "中文" : "EN"}</span>
+                </button>
+                <div class="lang-dropdown" data-lang-dropdown>
+                  <a
+                    class:list={["lang-dropdown-option", locale === "zh" && "is-active"]}
+                    href={switchLocale(localizePath(path, locale), "zh")}
+                  >
+                    中文
+                  </a>
+                  <a
+                    class:list={["lang-dropdown-option", locale === "en" && "is-active"]}
+                    href={switchLocale(localizePath(path, locale), "en")}
+                  >
+                    EN
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mobile-nav-panel" data-mobile-panel id="mobile-nav-panel">
+          <div class="mobile-nav-shell">
+            <nav class="mobile-menu">
+              <a
+                class="mobile-menu-link mobile-search-link"
+                data-mobile-link
+                href={localizePath("/search/", locale)}
+              >
+                {locale === "zh" ? "搜索" : "Search"}
+              </a>
+              <a
+                class:list={[path === "/" && "is-active", "mobile-menu-link"]}
+                data-mobile-link
+                href={localizePath("/", locale) + "#quick-start"}
+              >
+                Quick Start
+              </a>
+              {
+                siteConfig.navigation.map((item) => (
+                  <a
+                    class:list={[active === item.key && "is-active", "mobile-menu-link"]}
+                    data-mobile-link
+                    href={localizePath(item.href, locale)}
+                  >
+                    {item.label}
+                  </a>
+                ))
+              }
+            </nav>
+            <div class="mobile-menu-tools">
+              <div
+                aria-label="Theme"
+                class="theme-switch mobile-theme-switch"
+                data-theme-switch
+                role="group"
+              >
+                {
+                  themeOptions.map(({ key, label }) => (
+                    <button
+                      aria-label={label}
+                      aria-pressed={key === "system" ? "true" : "false"}
+                      class="theme-option"
+                      data-theme-option={key}
+                      title={label}
+                      type="button"
+                    >
+                      <span aria-hidden="true" class="theme-option-icon">
+                        {
+                          key === "light" ? (
+                            <svg fill="none" viewBox="0 0 24 24">
+                              <circle cx="12" cy="12" r="4.25" stroke="currentColor" stroke-width="1.8"></circle>
+                              <path d="M12 2.75v2.5M12 18.75v2.5M21.25 12h-2.5M5.25 12h-2.5M18.54 5.46l-1.77 1.77M7.23 16.77l-1.77 1.77M18.54 18.54l-1.77-1.77M7.23 7.23L5.46 5.46" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"></path>
+                            </svg>
+                          ) : key === "dark" ? (
+                            <svg fill="none" viewBox="0 0 24 24">
+                              <path d="M14.5 3.25a8.75 8.75 0 1 0 6.25 15.87A9.75 9.75 0 1 1 14.5 3.25Z" fill="currentColor"></path>
+                            </svg>
+                          ) : (
+                            <svg fill="none" viewBox="0 0 24 24">
+                              <rect height="11.5" rx="1.75" stroke="currentColor" stroke-width="1.8" width="16" x="4" y="4.5"></rect>
+                              <path d="M9 19.5h6M12 16v3.5" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"></path>
+                            </svg>
+                          )
+                        }
+                      </span>
+                    </button>
+                  ))
+                }
+              </div>
+              <div aria-label="Language" class="mobile-locale-switch" role="group">
+                <a
+                  class:list={["mobile-locale-option", locale === "zh" && "is-active"]}
+                  data-mobile-link
+                  href={switchLocale(localizePath(path, locale), "zh")}
+                >
+                  中文
+                </a>
+                <a
+                  class:list={["mobile-locale-option", locale === "en" && "is-active"]}
+                  data-mobile-link
+                  href={switchLocale(localizePath(path, locale), "en")}
+                >
+                  EN
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="container">
+        <slot />
+      </main>
+
+      <footer class="container footer">
+        <div class="footer-top">
+          <div>
+            <strong>{siteConfig.name}</strong>
+            <p class="small">
+              {locale === "zh" ? siteConfig.tagline.zh : siteConfig.tagline.en}
+            </p>
+          </div>
+          <div class="footer-links">
+            {
+              siteConfig.footerLinks.map((link) => (
+                <a href={localizePath(link.href, locale)}>{locale === "zh" ? link.zh : link.en}</a>
+              ))
+            }
+            {
+              siteConfig.officialLinks.map((link) => (
+                <a href={link.href} rel="noreferrer" target="_blank">{link.label}</a>
+              ))
+            }
+          </div>
+        </div>
+      </footer>
+    </div>
+    <script is:inline>
+      (() => {
+        const storageKey = "theme-preference";
+        const root = document.documentElement;
+        const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        const options = Array.from(document.querySelectorAll("[data-theme-option]"));
+        const menuToggle = document.querySelector("[data-menu-toggle]");
+        const mobilePanel = document.querySelector("[data-mobile-panel]");
+        const mobileLinks = Array.from(document.querySelectorAll("[data-mobile-link]"));
+        const langMenu = document.querySelector("[data-lang-menu]");
+        const langTrigger = document.querySelector("[data-lang-trigger]");
+
+        if (options.length === 0) {
+          return;
+        }
+
+        const getStoredTheme = () => {
+          const value = window.localStorage.getItem(storageKey);
+          return value === "light" || value === "dark" || value === "system" ? value : "system";
+        };
+
+        const resolveTheme = (theme) => (theme === "system" ? (mediaQuery.matches ? "dark" : "light") : theme);
+
+        const syncOptions = (theme) => {
+          options.forEach((option) => {
+            const isActive = option instanceof HTMLElement && option.dataset.themeOption === theme;
+            option.setAttribute("aria-pressed", isActive ? "true" : "false");
+          });
+        };
+
+        const applyTheme = (theme) => {
+          const resolvedTheme = resolveTheme(theme);
+          root.dataset.theme = resolvedTheme;
+          root.dataset.themePreference = theme;
+          root.style.colorScheme = resolvedTheme;
+          syncOptions(theme);
+        };
+
+        options.forEach((option) => {
+          option.addEventListener("click", () => {
+            if (!(option instanceof HTMLElement)) {
+              return;
+            }
+
+            const nextTheme = option.dataset.themeOption;
+            if (nextTheme !== "light" && nextTheme !== "dark" && nextTheme !== "system") {
+              return;
+            }
+
+            window.localStorage.setItem(storageKey, nextTheme);
+            applyTheme(nextTheme);
+          });
+        });
+
+        mediaQuery.addEventListener("change", () => {
+          const currentTheme = getStoredTheme();
+          if (currentTheme === "system") {
+            applyTheme(currentTheme);
+          }
+        });
+
+        const setMenuOpen = (open) => {
+          if (!(menuToggle instanceof HTMLButtonElement) || !(mobilePanel instanceof HTMLElement)) {
+            return;
+          }
+
+          menuToggle.setAttribute("aria-expanded", open ? "true" : "false");
+          menuToggle.setAttribute("aria-label", open ? "Close navigation menu" : "Open navigation menu");
+          mobilePanel.dataset.open = open ? "true" : "false";
+          document.body.classList.toggle("menu-open", open);
+        };
+
+        if (menuToggle instanceof HTMLButtonElement) {
+          menuToggle.addEventListener("click", () => {
+            const isOpen = menuToggle.getAttribute("aria-expanded") === "true";
+            setMenuOpen(!isOpen);
+          });
+        }
+
+        if (langTrigger instanceof HTMLButtonElement && langMenu instanceof HTMLElement) {
+          langTrigger.addEventListener("click", () => {
+            const isOpen = langMenu.dataset.open === "true";
+            langMenu.dataset.open = isOpen ? "false" : "true";
+            langTrigger.setAttribute("aria-expanded", isOpen ? "false" : "true");
+          });
+        }
+
+        mobileLinks.forEach((link) => {
+          link.addEventListener("click", () => {
+            setMenuOpen(false);
+          });
+        });
+
+        if (mobilePanel instanceof HTMLElement) {
+          mobilePanel.addEventListener("click", (event) => {
+            if (event.target === mobilePanel) {
+              setMenuOpen(false);
+            }
+          });
+        }
+
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") {
+            setMenuOpen(false);
+            if (langMenu instanceof HTMLElement) {
+              langMenu.dataset.open = "false";
+            }
+            if (langTrigger instanceof HTMLButtonElement) {
+              langTrigger.setAttribute("aria-expanded", "false");
+            }
+          }
+        });
+
+        document.addEventListener("click", (event) => {
+          if (!(langMenu instanceof HTMLElement) || !(langTrigger instanceof HTMLButtonElement)) {
+            return;
+          }
+
+          if (!langMenu.contains(event.target instanceof Node ? event.target : null)) {
+            langMenu.dataset.open = "false";
+            langTrigger.setAttribute("aria-expanded", "false");
+          }
+        });
+
+        applyTheme(getStoredTheme());
+      })();
+    </script>
+  </body>
+</html>

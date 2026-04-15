@@ -1,0 +1,96 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import AdSlot from "@/components/AdSlot.astro";
+import { getEntryNeighbors, getLocalizedCollection, getRelatedEntries, getRouteSlug, getTranslationStatus, slugifyTag } from "@/lib/content";
+import { localizePath } from "@/lib/i18n";
+
+export async function getStaticPaths() {
+  const entries = await getLocalizedCollection("templates", "zh");
+  return entries.map((entry) => ({ params: { slug: getRouteSlug(entry) }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const entries = await getLocalizedCollection("templates", "zh");
+const neighbors = getEntryNeighbors(entries, entry);
+const relatedEntries = getRelatedEntries(entries, entry);
+const translationStatus = await getTranslationStatus("templates", "zh", entry);
+const { Content, headings } = await entry.render();
+const formatDate = new Intl.DateTimeFormat("zh-CN", { dateStyle: "medium" });
+---
+
+<BaseLayout
+  active="templates"
+  description={entry.data.summary}
+  locale="zh"
+  ogType="article"
+  path={`/templates/${getRouteSlug(entry)}/`}
+  publishedAt={entry.data.publishedAt}
+  title={`${entry.data.title} | AnyPlaybook`}
+  updatedAt={entry.data.updatedAt}
+>
+  <section class="section">
+    <div class="detail-layout">
+      <article class="card page-prose">
+        <nav aria-label="Breadcrumb" class="breadcrumb">
+          <a href={localizePath("/", "zh")}>首页</a>
+          <span>/</span>
+          <a href={localizePath("/templates/", "zh")}>Templates</a>
+          <span>/</span>
+          <span aria-current="page">{entry.data.title}</span>
+        </nav>
+        <div class="detail-context">
+          <span class="detail-chip">{entry.data.category}</span>
+          <span class="detail-chip">{entry.data.difficulty}</span>
+          <span class="detail-chip">{entry.data.time}</span>
+          {entry.data.updatedAt && <span class="detail-chip">更新于 {formatDate.format(entry.data.updatedAt)}</span>}
+        </div>
+        <h1>{entry.data.title}</h1>
+        <p class="sub detail-lead">{entry.data.summary}</p>
+        <Content />
+        <AdSlot locale="zh" slot="detail_after_content" />
+        <div class="detail-nav">
+          {neighbors.next && <a class="detail-nav-link" href={localizePath(`/templates/${getRouteSlug(neighbors.next)}/`, "zh")} title={`较新内容：${neighbors.next.data.title}`}>较新内容：{neighbors.next.data.title}</a>}
+          {neighbors.previous && <a class="detail-nav-link" href={localizePath(`/templates/${getRouteSlug(neighbors.previous)}/`, "zh")} title={`较早内容：${neighbors.previous.data.title}`}>较早内容：{neighbors.previous.data.title}</a>}
+        </div>
+      </article>
+      <aside class="detail-sidebar">
+        {translationStatus.status !== "ok" && (
+          <div class="card translation-note">
+            <p class="eyebrow">翻译状态</p>
+            <p>{translationStatus.status === "missing" ? "这个模板暂时还没有英文版本。" : "英文版本可能比当前中文模板更新。"}</p>
+          </div>
+        )}
+        {headings.length > 0 && (
+          <div class="card detail-sidebar-card">
+            <p class="eyebrow">本页目录</p>
+            <nav aria-label="本页目录" class="toc-nav">
+              {headings.map((heading) => (
+                <a class:list={["toc-link", heading.depth > 2 && "is-nested"]} href={`#${heading.slug}`}>{heading.text}</a>
+              ))}
+            </nav>
+          </div>
+        )}
+        <div class="card">
+          <p class="eyebrow">模板快照</p>
+          <p>{entry.data.recommendedFor}</p>
+          <div class="tag-row">
+            {entry.data.tags.map((tag: string) => <a class="tag tag-link" href={localizePath(`/tags/${slugifyTag(tag)}/`, "zh")}>{tag}</a>)}
+            {entry.data.channels.map((channel: string) => <span class="tag">{channel}</span>)}
+          </div>
+        </div>
+        {relatedEntries.length > 0 && (
+          <div class="card detail-sidebar-card">
+            <p class="eyebrow">相关模板</p>
+            <nav class="toc-nav" aria-label="相关模板">
+              {relatedEntries.map((item) => (
+                <a class="toc-link" href={localizePath(`/templates/${getRouteSlug(item)}/`, "zh")}>{item.data.title}</a>
+              ))}
+            </nav>
+          </div>
+        )}
+        <AdSlot locale="zh" slot="detail_sidebar" />
+        <a class="btn secondary" href={localizePath("/templates/", "zh")}>返回 Templates</a>
+      </aside>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,27 @@
+---
+locale: en
+publishedAt: 2026-04-02
+updatedAt: 2026-04-15
+category: Authentication
+title: Authentication fails over HTTPS
+summary: Confirm whether the host expects a token, SSH key, or SSO flow before retrying login prompts.
+symptom: Clone or push asks for credentials repeatedly
+readingTime: 6 min
+tags:
+  - auth
+  - https
+checks:
+  - Confirm which auth method the host expects
+  - Check whether a token expired
+  - Verify that your credential helper is using the right account
+commonCauses:
+  - Password auth is disabled
+  - Expired personal access token
+  - Wrong account cached locally
+ctaLabel: Review the first auth step
+ctaHref: /quick-start/install-core-stack/
+---
+
+## First check
+
+Do not keep typing the same credentials. Confirm the expected auth method first.

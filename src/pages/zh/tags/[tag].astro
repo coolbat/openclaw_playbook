@@ -1,0 +1,55 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getAllTagPages, getEntriesByTag, getRouteSlug } from "@/lib/content";
+import { localizePath } from "@/lib/i18n";
+
+const sectionMeta = {
+  quickStart: { title: "Quick Start", href: "/#quick-start" },
+  learn: { title: "Learn", href: "/learn/" },
+  templates: { title: "Templates", href: "/templates/" },
+  troubleshoot: { title: "Troubleshoot", href: "/troubleshoot/" },
+} as const;
+
+export async function getStaticPaths() {
+  const tags = await getAllTagPages("zh");
+  return tags.map((tag) => ({ params: { tag: tag.slug }, props: { tag } }));
+}
+
+const { tag } = Astro.props;
+const sections = await getEntriesByTag("zh", tag.slug);
+---
+
+<BaseLayout active="none" description={`标签 ${tag.label} 的聚合页。`} locale="zh" path={`/tags/${tag.slug}/`} title={`${tag.label} | 标签 | AnyPlaybook`}>
+  <section class="section">
+    <div class="card page-prose">
+      <p class="eyebrow">TAG</p>
+      <h1>{tag.label}</h1>
+      <p class="sub">这个标签下的 Quick Start、Learn、Templates 和 Troubleshoot 内容都会聚合到这里。</p>
+    </div>
+  </section>
+
+  {sections.map((section) => (
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2>{sectionMeta[section.collection].title}</h2>
+          <p class="small">{section.entries.length} 篇相关内容</p>
+        </div>
+        <a class="btn secondary" href={localizePath(sectionMeta[section.collection].href, "zh")}>查看 {sectionMeta[section.collection].title}</a>
+      </div>
+      <div class="grid cols-3">
+        {section.entries.map((entry) => (
+          <article class="card resource-card">
+            {"category" in entry.data && entry.data.category && <p class="eyebrow">{entry.data.category}</p>}
+            {"step" in entry.data && entry.data.step && <p class="eyebrow">{entry.data.step}</p>}
+            <h3>{entry.data.title}</h3>
+            <p>{entry.data.summary}</p>
+            <div class="cta-row">
+              <a class="btn secondary card-link" href={localizePath(`/${section.collection === "quickStart" ? "quick-start" : section.collection}/${getRouteSlug(entry)}/`, "zh")}>打开内容</a>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  ))}
+</BaseLayout>

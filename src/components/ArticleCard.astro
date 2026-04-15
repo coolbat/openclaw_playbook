@@ -1,0 +1,19 @@
+---
+const { eyebrow, title, summary, href, meta } = Astro.props as {
+  eyebrow?: string;
+  title: string;
+  summary: string;
+  href: string;
+  meta?: string;
+};
+---
+
+<article class="card resource-card">
+  {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+  <h3>{title}</h3>
+  {meta && <p class="small">{meta}</p>}
+  <p>{summary}</p>
+  <div class="cta-row">
+    <a class="btn secondary card-link" href={href}>Read article</a>
+  </div>
+</article>

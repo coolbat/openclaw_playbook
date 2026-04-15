@@ -1,0 +1,22 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import PageHero from "@/components/PageHero.astro";
+import SkillsPanel from "@/components/SkillsPanel.astro";
+
+const locale = "zh";
+---
+
+<BaseLayout active="skills" description="适合教程站的资源目录模板。" locale={locale} path="/skills/" title="Resources | AnyPlaybook">
+  <PageHero
+    className="page-hero hero-single"
+    highlights={[
+      "按真实任务分组",
+      "可替换成工具或资源",
+      "支持双语目录结构",
+    ]}
+    kicker="CURATED RESOURCES"
+    summary="一个可复用的工具、资源、参考链接或推荐工具栈目录示例，当前用 skills 数据演示，也可以替换成更通用的资源清单。"
+    title="一个可复用的资源目录。"
+  />
+  <SkillsPanel locale={locale} />
+</BaseLayout>

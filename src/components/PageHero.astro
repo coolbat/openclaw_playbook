@@ -1,0 +1,54 @@
+---
+const {
+  kicker,
+  title,
+  summary,
+  ctas = [],
+  highlights = [],
+  aside,
+  className = "page-hero",
+} = Astro.props as {
+  kicker: string;
+  title: string;
+  summary: string;
+  ctas?: { href: string; label: string; variant?: "primary" | "secondary" }[];
+  highlights?: string[];
+  aside?: Astro.ComponentFactory | string;
+  className?: string;
+};
+---
+
+<section class:list={[className, !aside && "hero-single"]}>
+  <article>
+    <span class="kicker">{kicker}</span>
+    <h1>{title}</h1>
+    <p class="sub">{summary}</p>
+    {
+      ctas.length > 0 && (
+        <div class="cta-row">
+          {ctas.map((cta) => (
+            <a class:list={["btn", cta.variant ?? "secondary"]} href={cta.href}>
+              {cta.label}
+            </a>
+          ))}
+        </div>
+      )
+    }
+    {
+      highlights.length > 0 && (
+        <ul class="hero-highlights" aria-label="Highlights">
+          {highlights.map((item) => (
+            <li>{item}</li>
+          ))}
+        </ul>
+      )
+    }
+  </article>
+  {
+    aside && (
+      <aside class="card hero-aside">
+        {typeof aside === "string" ? <p class="hero-aside-copy">{aside}</p> : aside}
+      </aside>
+    )
+  }
+</section>

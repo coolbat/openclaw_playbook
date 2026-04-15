@@ -1,0 +1,96 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import AdSlot from "@/components/AdSlot.astro";
+import { getEntryNeighbors, getLocalizedCollection, getRelatedEntries, getRouteSlug, getTranslationStatus, slugifyTag } from "@/lib/content";
+import { localizePath } from "@/lib/i18n";
+
+export async function getStaticPaths() {
+  const entries = await getLocalizedCollection("quickStart", "en");
+  return entries.map((entry) => ({ params: { slug: getRouteSlug(entry) }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const entries = await getLocalizedCollection("quickStart", "en");
+const neighbors = getEntryNeighbors(entries, entry);
+const relatedEntries = getRelatedEntries(entries, entry);
+const translationStatus = await getTranslationStatus("quickStart", "en", entry);
+const { Content, headings } = await entry.render();
+const formatDate = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
+---
+
+<BaseLayout
+  active="home"
+  description={entry.data.summary}
+  locale="en"
+  ogType="article"
+  path={`/quick-start/${getRouteSlug(entry)}/`}
+  publishedAt={entry.data.publishedAt}
+  title={`${entry.data.title} | AnyPlaybook`}
+  updatedAt={entry.data.updatedAt}
+>
+  <section class="section">
+    <div class="detail-layout">
+      <article class="card page-prose">
+        <nav aria-label="Breadcrumb" class="breadcrumb">
+          <a href={localizePath("/", "en")}>Home</a>
+          <span>/</span>
+          <a href={localizePath("/#quick-start", "en")}>Quick Start</a>
+          <span>/</span>
+          <span aria-current="page">{entry.data.title}</span>
+        </nav>
+        <div class="detail-context">
+          <span class="detail-chip">{entry.data.step}</span>
+          {entry.data.readingTime && <span class="detail-chip">{entry.data.readingTime}</span>}
+          {entry.data.updatedAt && <span class="detail-chip">Updated {formatDate.format(entry.data.updatedAt)}</span>}
+        </div>
+        <h1>{entry.data.title}</h1>
+        <p class="sub detail-lead">{entry.data.summary}</p>
+        <Content />
+        <AdSlot locale="en" slot="detail_after_content" />
+        <div class="detail-nav">
+          {neighbors.next && <a class="detail-nav-link" href={localizePath(`/quick-start/${getRouteSlug(neighbors.next)}/`, "en")} title={`Next step: ${neighbors.next.data.title}`}>Next step: {neighbors.next.data.title}</a>}
+          {neighbors.previous && <a class="detail-nav-link" href={localizePath(`/quick-start/${getRouteSlug(neighbors.previous)}/`, "en")} title={`Previous step: ${neighbors.previous.data.title}`}>Previous step: {neighbors.previous.data.title}</a>}
+        </div>
+      </article>
+      <aside class="detail-sidebar">
+        {translationStatus.status !== "ok" && (
+          <div class="card translation-note">
+            <p class="eyebrow">Translation status</p>
+            <p>{translationStatus.status === "missing" ? "This Quick Start step does not have a Chinese translation yet." : "The Chinese translation may be older than this English Quick Start step."}</p>
+          </div>
+        )}
+        {headings.length > 0 && (
+          <div class="card detail-sidebar-card">
+            <p class="eyebrow">On this page</p>
+            <nav aria-label="On this page" class="toc-nav">
+              {headings.map((heading) => (
+                <a class:list={["toc-link", heading.depth > 2 && "is-nested"]} href={`#${heading.slug}`}>{heading.text}</a>
+              ))}
+            </nav>
+          </div>
+        )}
+        <div class="card">
+          <p class="eyebrow">Step outcome</p>
+          <ul>
+            {entry.data.bullets.map((item: string) => <li>{item}</li>)}
+          </ul>
+          <div class="tag-row">
+            {entry.data.tags.map((tag: string) => <a class="tag tag-link" href={localizePath(`/tags/${slugifyTag(tag)}/`, "en")}>{tag}</a>)}
+          </div>
+        </div>
+        {relatedEntries.length > 0 && (
+          <div class="card detail-sidebar-card">
+            <p class="eyebrow">Related</p>
+            <nav class="toc-nav" aria-label="Related Quick Start guides">
+              {relatedEntries.map((item) => (
+                <a class="toc-link" href={localizePath(`/quick-start/${getRouteSlug(item)}/`, "en")}>{item.data.title}</a>
+              ))}
+            </nav>
+          </div>
+        )}
+        <AdSlot locale="en" slot="detail_sidebar" />
+        <a class="btn secondary" href={localizePath("/", "en") + "#quick-start"}>Back to Quick Start</a>
+      </aside>
+    </div>
+  </section>
+</BaseLayout>

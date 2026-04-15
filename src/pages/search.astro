@@ -1,0 +1,57 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+const locale = "en";
+---
+
+<BaseLayout active="none" description="Search across tutorials, templates, and troubleshooting guides." locale={locale} path="/search/" title="Search | AnyPlaybook">
+  <Fragment slot="head">
+    <link href="/pagefind/pagefind-ui.css" rel="stylesheet" />
+  </Fragment>
+
+  <section class="section search-page">
+    <div class="search-shell card">
+      <p class="eyebrow">SEARCH</p>
+      <h1>Find the next useful answer fast.</h1>
+      <p class="sub">Search across Quick Start, Learn, Templates, and Troubleshoot without leaving the static site.</p>
+      <div class="search-root" id="search-root">
+        <p class="search-loading">Loading search…</p>
+      </div>
+    </div>
+  </section>
+
+  <script is:inline>
+    const initSearch = async () => {
+      const root = document.querySelector("#search-root");
+      if (!(root instanceof HTMLElement) || root.dataset.ready === "true") return;
+
+      try {
+        const PagefindUI = await import("/pagefind/pagefind-ui.js");
+        new PagefindUI.default({
+          element: "#search-root",
+          bundlePath: "/pagefind/",
+          showImages: false,
+          showSubResults: true,
+          resetStyles: false,
+          autofocus: true,
+          translations: {
+            placeholder: "Search guides, templates, and fixes",
+            zero_results: "No results yet. Try a symptom, topic, or tag.",
+            clear_search: "Clear search",
+            load_more: "Load more results",
+          },
+        });
+        root.dataset.ready = "true";
+      } catch (error) {
+        root.innerHTML = '<p class="search-loading">Search failed to load. Run <code>npm run build</code> and refresh the page.</p>';
+        console.error("Failed to initialize search", error);
+      }
+    };
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initSearch, { once: true });
+    } else {
+      initSearch();
+    }
+  </script>
+</BaseLayout>

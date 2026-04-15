@@ -1,0 +1,59 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import PageHero from "@/components/PageHero.astro";
+import ArticleCard from "@/components/ArticleCard.astro";
+import { getLocalizedCollection, getRouteSlug, getUniqueCategories } from "@/lib/content";
+import { localizePath } from "@/lib/i18n";
+
+const locale = "zh";
+const entries = await getLocalizedCollection("troubleshoot", locale);
+const categories = getUniqueCategories(entries);
+---
+
+<BaseLayout active="troubleshoot" description="按症状组织的排错库模板页。" locale={locale} path="/troubleshoot/" title="Troubleshoot | AnyPlaybook">
+  <PageHero
+    className="page-hero hero-single"
+    highlights={[
+      `${entries.length} 篇恢复指南`,
+      "从症状组织，不靠猜测",
+      "已连好后续跳转路径",
+    ]}
+    kicker="TROUBLESHOOT"
+    summary="从症状出发，帮助用户快速恢复并回到正确工作流的排错栏目。"
+    title="从症状恢复，而不是靠猜。"
+  />
+  <div class="filter-rail" data-filter-group="troubleshoot">
+    <button class="filter-button is-active" data-filter="all" type="button">全部分类</button>
+    {categories.map((category) => (
+      <button class="filter-button" data-filter={category} type="button">{category}</button>
+    ))}
+  </div>
+  <div class="grid cols-3">
+    {entries.map((entry) => (
+      <div data-filter-item={entry.data.category}>
+        <ArticleCard eyebrow={entry.data.symptom} href={localizePath(`/troubleshoot/${getRouteSlug(entry)}/`, locale)} summary={entry.data.summary} title={entry.data.title} />
+      </div>
+    ))}
+  </div>
+
+  <script is:inline>
+    (() => {
+      const group = document.querySelector('[data-filter-group="troubleshoot"]');
+      const items = Array.from(document.querySelectorAll("[data-filter-item]"));
+      if (!(group instanceof HTMLElement) || items.length === 0) return;
+
+      const buttons = Array.from(group.querySelectorAll("[data-filter]"));
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+          if (!(button instanceof HTMLElement)) return;
+          const value = button.dataset.filter ?? "all";
+          buttons.forEach((item) => item.classList.toggle("is-active", item === button));
+          items.forEach((item) => {
+            if (!(item instanceof HTMLElement)) return;
+            item.hidden = value !== "all" && item.dataset.filterItem !== value;
+          });
+        });
+      });
+    })();
+  </script>
+</BaseLayout>

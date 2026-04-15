@@ -1,0 +1,48 @@
+---
+import type { Locale } from "@/config/site";
+import { skillGroups } from "@/config/skills";
+
+const { locale } = Astro.props as { locale: Locale };
+---
+
+{
+  skillGroups.map((group, index) => (
+    <section class="section">
+      <div class="tabs-rail">
+        {skillGroups.map((tab) => (
+          <span class:list={["tab-trigger", tab.id === group.id && "is-active"]}>
+            {locale === "zh" ? tab.label.zh : tab.label.en}
+          </span>
+        ))}
+      </div>
+      {index === 0 && (
+        <p class="section-intro">
+          {locale === "zh"
+            ? "这个页面是“资源目录”版块的示例实现，当前用 skills 数据演示，fork 后可以替换成插件、资源、官方文档、推荐工具或服务清单。"
+            : "This page is an example pattern for a resources directory. It currently uses skills data, but downstream sites can replace it with plugins, documentation links, recommended tools, or service lists."}
+        </p>
+      )}
+      <div class="grid cols-2">
+        {group.items.map((item) => (
+          <article class="card">
+            <div class="detail-context">
+              <span class="detail-chip">{item.name}</span>
+              <span class="detail-chip">{item.risk}</span>
+              {item.starter && <span class="detail-chip">Starter</span>}
+            </div>
+            <p>{locale === "zh" ? item.summary.zh : item.summary.en}</p>
+            <div class="callout">
+              <p class="eyebrow">{locale === "zh" ? "示例条目" : "Example entry"}</p>
+              <code>{item.install}</code>
+            </div>
+            <ul>
+              {(locale === "zh" ? item.useCases.zh : item.useCases.en).map((useCase) => (
+                <li>{useCase}</li>
+              ))}
+            </ul>
+          </article>
+        ))}
+      </div>
+    </section>
+  ))
+}

@@ -1,0 +1,27 @@
+---
+locale: zh
+publishedAt: 2026-03-31
+updatedAt: 2026-04-15
+category: History
+title: 不小心进入 detached HEAD
+summary: 先把当前工作挂到一个分支上，再继续改，不然下一次 checkout 很容易把它“藏起来”。
+symptom: Git 提示 detached HEAD
+readingTime: 7 分钟
+tags:
+  - detached head
+  - git checkout
+checks:
+  - 先确认是否已经在 detached HEAD 上提交过
+  - 离开前先创建一个分支
+  - 判断这段状态是否应该变成正式分支
+commonCauses:
+  - 直接 checkout 到某个 commit
+  - 查看旧版本时没有先开分支
+  - 跟着过时教程复制命令
+ctaLabel: 查看仓库旁文档原则
+ctaHref: /zh/learn/write-docs-next-to-the-repo/
+---
+
+## 第一原则
+
+Detached HEAD 本身并不可怕，只要你在离开前给当前工作起一个分支名。

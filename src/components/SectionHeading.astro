@@ -1,0 +1,18 @@
+---
+const { title, summary, actionLabel, actionHref } = Astro.props as {
+  title: string;
+  summary?: string;
+  actionLabel?: string;
+  actionHref?: string;
+};
+---
+
+<div class="section-head">
+  <div>
+    <h2>{title}</h2>
+    {summary && <p class="small">{summary}</p>}
+  </div>
+  {actionLabel && actionHref && (
+    <a class="btn secondary" href={actionHref}>{actionLabel}</a>
+  )}
+</div>
