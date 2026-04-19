@@ -1,0 +1,38 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Observability & diagnostics"
+title: "Read status before logs"
+summary: "Logs are noisy, and you do not know which lines matter."
+symptom: "Logs are noisy, and you do not know which lines matter."
+readingTime: "3 min"
+tags: []
+checks: [
+  "Identify the unhealthy subsystem first",
+  "Filter logs around one failure window",
+  "Write down one hypothesis before the next config change"
+]
+commonCauses: [
+  "Logs opened too early",
+  "No subsystem hypothesis yet",
+  "Health state ignored while reading errors"
+]
+ctaLabel: "Continue"
+ctaHref: "/learn/"
+---
+## What this symptom usually means
+
+Logs are giving you too much raw information without enough context. Status narrows the search space before logs become useful.
+
+## First recovery loop
+
+Identify which subsystem is unhealthy first. Then filter logs around one failure window instead of reading everything at once.
+
+## What to verify next
+
+Write down one concrete hypothesis before the next config change. That makes each log reading session more intentional and less reactive.
+
+## If the issue persists
+
+Return to a shorter health loop and simplify the reproduction again. Better evidence usually beats deeper logging.

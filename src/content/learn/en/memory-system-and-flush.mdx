@@ -1,0 +1,159 @@
+---
+locale: en
+publishedAt: 2026-04-08
+updatedAt: 2026-04-08
+category: "Advanced Config"
+title: "Memory System in Practice: Flush, Logs, and Search"
+summary: "Configure memoryFlush to survive context compaction, write structured logs that memorySearch can actually find, and set up a free embedding API for semantic recall."
+readingTime: "14 min"
+tags: [
+  "Memory",
+  "memoryFlush",
+  "memorySearch"
+]
+---
+Long conversations with OpenClaw eventually hit a wall: the agent starts forgetting things you told it an hour ago. This is not a bug — it is context compaction, and it is working as designed. The problem is that the default behavior discards detail you probably wanted to keep.
+
+This guide covers three things: stopping important information from being lost during compaction, writing logs that are actually retrievable later, and wiring up semantic search so the agent can find old context without reading every file.
+
+## Why the agent "forgets"
+
+Every model has a context window limit. When a conversation approaches that limit, OpenClaw automatically compresses older messages into a summary to free up space. The compression is lossy — details get dropped.
+
+The result: you are mid-task, the agent was tracking something important, compaction fires, and now it has lost the thread.
+
+## Fix 1: memoryFlush — save before compaction fires
+
+`memoryFlush` tells the agent to write important information to files **before** compaction runs. Add this to `openclaw.json`:
+
+```json
+{
+  "agents": {
+    "defaults": {
+      "compaction": {
+        "reserveTokensFloor": 20000,
+        "memoryFlush": {
+          "enabled": true,
+          "softThresholdTokens": 4000
+        }
+      }
+    }
+  }
+}
+```
+
+| Parameter | What it does | Recommended value |
+|-----------|-------------|-------------------|
+| `reserveTokensFloor` | Minimum recent context to keep after compaction | `20000` |
+| `memoryFlush.enabled` | Turn on pre-compaction save | `true` |
+| `memoryFlush.softThresholdTokens` | How many tokens before compaction to trigger the flush | `4000` |
+
+`memoryFlush` runs silently — it does not interrupt the conversation. If you have verbose mode on (`/verbose`), you will see `🧹 Auto-compaction complete` when it fires.
+
+For critical sessions, you can also trigger a manual compact with a hint: `/compact keep technical decisions and current task state`. This gives the agent explicit guidance on what to preserve.
+
+## Fix 2: structured logs — write memory that memorySearch can find
+
+`memorySearch` uses vector semantic search under the hood. The quality of retrieval depends almost entirely on how the log entries are written. Unstructured prose has low hit rates. Structured entries with clear labels and tags have high hit rates.
+
+### The log format that works
+
+```markdown
+### [PROJECT:name] Title
+
+- **Conclusion**: one-sentence outcome
+- **Files changed**: relevant paths
+- **Lesson**: what went wrong (if anything)
+- **Tags**: #tag1 #tag2 #tag3
+```
+
+### Why this format works
+
+- The `[PROJECT:name]` prefix lets the agent filter by project without reading everything
+- **Conclusion** is the first thing semantic search will match against — make it specific
+- **Tags** are explicit anchors for retrieval — use consistent vocabulary across entries
+- Keeping entries short means more entries fit in context when retrieved
+
+### Comparison
+
+Search query: "nginx deployment issue"
+
+Low hit rate — unstructured:
+```
+Today I worked on the server. Tried a few things with nginx, had some config
+problems, eventually got it working after changing the upstream settings...
+```
+
+High hit rate — structured:
+```markdown
+### [PROJECT:MyApp] nginx reverse proxy configured
+- **Conclusion**: nginx reverse proxy on port 80, upstream 127.0.0.1:3000
+- **Files changed**: `/etc/nginx/sites-available/myapp`
+- **Lesson**: use 127.0.0.1 not localhost for upstream (IPv6 resolution issue)
+- **Tags**: #myapp #nginx #deploy #upstream
+```
+
+The structured version will surface reliably when you later ask "what was the nginx issue with MyApp?" The unstructured version may not.
+
+## Fix 3: memorySearch with a free embedding API
+
+By default, `memorySearch` may not be configured. Setting it up with a free embedding model makes a significant difference for longer-running setups.
+
+For users in China, SiliconFlow's `bge-m3` model is free, requires no credit card, and has strong bilingual (Chinese + English) support:
+
+```json
+{
+  "memorySearch": {
+    "enabled": true,
+    "provider": "openai",
+    "remote": {
+      "baseUrl": "https://api.siliconflow.cn/v1",
+      "apiKey": "your-siliconflow-api-key"
+    },
+    "model": "BAAI/bge-m3"
+  }
+}
+```
+
+To get a SiliconFlow API key: go to siliconflow.cn → register → dashboard → create API key. The `bge-m3` model is free with no usage limits.
+
+Why `bge-m3`: 1024-dimension vectors, strong bilingual performance, and it is free. For most OpenClaw memory workloads, this is the right default.
+
+## Fix 4: automatic memory maintenance
+
+Over time, daily logs accumulate. Old completed tasks and stale entries start polluting search results. Add a weekly maintenance task to your `HEARTBEAT.md`:
+
+```markdown
+## Memory Maintenance (weekly)
+
+Read `memory/heartbeat-state.json` and check the `lastMemoryMaintenance` field.
+If 7 or more days have passed:
+1. Read the last 7 days of `memory/YYYY-MM-DD.md` logs
+2. Extract valuable conclusions into projects.md or lessons.md
+3. Compress completed one-off tasks into a single summary line
+4. Delete stale or superseded entries
+5. Update `lastMemoryMaintenance` in heartbeat-state.json to today
+```
+
+Create `memory/heartbeat-state.json` to track when maintenance last ran:
+
+```json
+{
+  "lastMemoryMaintenance": "2026-01-01"
+}
+```
+
+The agent will check this file during heartbeat and run the maintenance pass automatically when the interval is reached.
+
+## Putting it together
+
+The full memory system has four layers working together:
+
+1. **memoryFlush** — prevents loss during compaction
+2. **Structured log format** — makes entries retrievable
+3. **memorySearch + bge-m3** — enables semantic recall across all logs
+4. **Weekly maintenance** — keeps the search index clean over time
+
+None of these require significant setup time. The `memoryFlush` config is five lines. The log format is a habit. The embedding API takes ten minutes to configure. The maintenance task is a paragraph in `HEARTBEAT.md`.
+
+> **The most common mistake** is writing memory as a journal — long, narrative, process-focused. That style feels natural but produces poor retrieval. Write conclusions, not stories. The agent needs to find the answer, not relive the journey.

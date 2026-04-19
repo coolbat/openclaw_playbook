@@ -7,10 +7,12 @@
     "dev": "astro dev",
     "build": "astro build && pagefind --site dist",
     "postbuild": "node scripts/sync-pagefind.mjs",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "migrate:openclaw101": "node scripts/migrate-openclaw101-content.mjs && node scripts/update-home-config-from-migration.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.0",
+    "@astrojs/rss": "^4.0.18",
     "@astrojs/sitemap": "^3.6.0",
     "astro": "^5.7.0",
     "remark-gfm": "^4.0.1"

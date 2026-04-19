@@ -1,0 +1,37 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Monitoring Alerts"
+title: "Error Log Triage Bot"
+summary: "Group repeated failures, highlight likely causes, and keep noisy logs from overwhelming responders."
+readingTime: "4 min"
+difficulty: "Intermediate"
+time: "26 min"
+risk: "Medium risk"
+channels: [
+  "Slack",
+  "Feishu"
+]
+recommendedFor: "Teams that need faster first-pass diagnosis before a human takes over."
+tags: [
+  "Logs",
+  "Triage",
+  "Ops"
+]
+---
+## When to use this template
+
+Use this when the team already has logs, but the logs are too noisy to support fast triage. The template turns repeated failures into manageable clusters.
+
+## Minimal setup
+
+Start with one log stream and one target error pattern. Do not mix several unrelated systems in the first version.
+
+## What good output looks like
+
+The output should cluster similar failures, preserve examples, and suggest where to look next. It should help a responder focus before opening raw logs.
+
+## First extension
+
+Add routing by severity or subsystem once the clustering quality feels accurate enough to trust.

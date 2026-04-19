@@ -1,0 +1,35 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Skills & Workflow Design"
+title: "Design a First Workflow That Is Small Enough"
+summary: "Use narrow goals, short loops, and inspectable outputs so failures stay diagnosable."
+readingTime: "12 min"
+tags: [
+  "Workflow",
+  "Narrow scope",
+  "Feedback loop"
+]
+---
+## Small enough means debuggable
+
+The first workflow should not impress anyone. It should teach you how the system behaves. That means it needs a clear trigger, a limited task boundary, and an output you can evaluate in seconds.
+
+## A useful workflow frame
+
+- one trigger
+- one transformation
+- one destination
+
+For example: collect a small set of links, summarize them, and post the summary into one internal channel.
+
+## What to avoid
+
+- multiple destinations
+- multiple approval paths
+- hidden background dependencies
+- outputs that are hard to evaluate
+
+> **If failure feels vague**
+>   The workflow is probably too large. Cut scope before you add more debugging.

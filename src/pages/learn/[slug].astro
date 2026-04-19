@@ -25,12 +25,26 @@ const formatDate = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
   ogType="article"
   path={`/learn/${getRouteSlug(entry)}/`}
   publishedAt={entry.data.publishedAt}
-  title={`${entry.data.title} | AnyPlaybook`}
+  title={`${entry.data.title} | OpenClaw101`}
   updatedAt={entry.data.updatedAt}
 >
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": entry.data.title,
+      "description": entry.data.summary,
+      "url": `https://openclaw101.space/learn/${getRouteSlug(entry)}/`,
+      "inLanguage": "en",
+      ...(entry.data.publishedAt && { "datePublished": entry.data.publishedAt.toISOString() }),
+      ...(entry.data.updatedAt && { "dateModified": entry.data.updatedAt.toISOString() }),
+      "publisher": { "@type": "Organization", "name": "OpenClaw101", "url": "https://openclaw101.space" },
+      "mainEntityOfPage": { "@type": "WebPage", "@id": `https://openclaw101.space/learn/${getRouteSlug(entry)}/` }
+    })} />
+  </Fragment>
   <section class="section">
     <div class="detail-layout">
-      <article class="card page-prose">
+      <article class="card page-prose" data-pagefind-body>
         <nav aria-label="Breadcrumb" class="breadcrumb">
           <a href={localizePath("/", "en")}>Home</a>
           <span>/</span>

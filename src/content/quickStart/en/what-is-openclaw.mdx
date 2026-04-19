@@ -1,0 +1,249 @@
+---
+locale: en
+publishedAt: 2026-04-11
+updatedAt: 2026-04-11
+step: "01"
+title: "What Is OpenClaw"
+summary: "Build the right mental model before you touch setup, channels, skills, or automation."
+readingTime: "12 min"
+bullets: [
+  "Useful when tasks are repeatable and channel-based.",
+  "Skills matter because they expand what the system can do.",
+  "The goal is a reliable loop, not one lucky prompt."
+]
+tags: []
+---
+Many first-time users think of OpenClaw as "a chatbot that can plug into Feishu or Telegram." That is not entirely wrong, but it leads to the wrong priorities.
+
+What makes OpenClaw valuable is not another chat surface. It is the ability to let an agent **receive input through a channel, call tools or skills, execute repeatable flows, and send results back to a defined destination**. If you treat it like a chat tool, you will keep tuning prompts. If you treat it like a workflow execution system, you will start thinking about channels, permissions, context, output destinations, and repeatability.
+
+## The shortest useful definition
+
+Think of OpenClaw as a **workflow execution layer with an AI interface**, not just an LLM wrapper.
+
+- A chat message is usually just the trigger, not the whole product.
+- The model handles reasoning, but skills, commands, integrations, and the workspace determine what the system can actually do.
+- The real target is not "it produced one decent reply." The target is "this can run again tomorrow."
+
+> If the task is not repeatable, channel-based, or tied to a concrete output, it may not be the right first OpenClaw use case.
+
+## System architecture: how the pieces connect
+
+The fastest way to understand OpenClaw is to see how its core components fit together:
+
+```
+┌─────────────────────────────────────────────┐
+│               Channels (Input)               │
+│   Feishu / Telegram / CLI / Webhook / Cron   │
+└──────────────────────┬──────────────────────┘
+                       │ trigger / message
+                       ▼
+┌─────────────────────────────────────────────┐
+│               OpenClaw Core                  │
+│  ┌──────────────┐    ┌─────────────────────┐ │
+│  │ Message Router│───▶│  Agent Execution    │ │
+│  └──────────────┘    └──────────┬──────────┘ │
+│                                 │             │
+│  ┌──────────────────────────────▼──────────┐ │
+│  │            Tools / Skills Layer          │ │
+│  │  Search / Summarize / Write / Code / API │ │
+│  └──────────────────────────────┬──────────┘ │
+│                                 │             │
+│  ┌──────────────────────────────▼──────────┐ │
+│  │            Workspace                     │ │
+│  │  AGENTS.md / Memory / Docs / Task State  │ │
+│  └─────────────────────────────────────────┘ │
+└──────────────────────┬──────────────────────┘
+                       │ output
+                       ▼
+┌─────────────────────────────────────────────┐
+│               Output Destinations            │
+│   Channel reply / Feishu doc / Notification  │
+└─────────────────────────────────────────────┘
+```
+
+Each layer has a clear responsibility:
+
+| Component | Responsibility | Typical form |
+|-----------|---------------|--------------|
+| **Channel** | Message entry and exit | Feishu bot, Telegram bot, CLI |
+| **Agent engine** | Decision-making, model calls, tool orchestration | Model provider + system prompt |
+| **Skills** | Callable capabilities | Web summary, briefing generator, code review |
+| **Workspace** | Persistent context and memory | AGENTS.md, structured logs, files |
+| **Output destination** | Where results land | Channel reply, doc write, webhook trigger |
+
+## Generic chat vs OpenClaw workflow: two different mindsets
+
+Same scenario, two different approaches.
+
+**Scenario: gather and distribute industry updates every morning**
+
+### Generic chat approach
+
+```
+You → ChatGPT: "summarize today's AI news"
+↓
+ChatGPT returns a block of text
+↓
+You copy and paste it into the group chat
+↓
+Repeat tomorrow
+```
+
+Problems: fully manual, inconsistent output format, no scale, must repeat every day.
+
+### OpenClaw workflow approach
+
+```
+Scheduled trigger (daily at 8:00)
+→ OpenClaw agent fires
+→ Calls "news summary" skill (specified sources)
+→ Formats output using a fixed template
+→ Sends to Feishu group automatically
+→ Writes execution record to workspace log
+```
+
+Result: runs every day without intervention, consistent format, auditable, zero manual effort.
+
+## What kinds of problems it fits best
+
+OpenClaw works best for tasks like these:
+
+- There is a fixed trigger: Feishu, Telegram, a scheduled task, or the CLI.
+- There is a stable execution path: "collect → structure → send to channel or document."
+- There is a concrete result: a summary, briefing, alert, draft, or sync action.
+- The task is worth reusing, not just a one-off demo.
+
+### Typical beginner-friendly scenarios
+
+**Scenario 1: daily AI briefing**
+
+```
+Trigger: cron (daily 09:00)
+Execution: fetch RSS sources → extract signals → format into briefing
+Output: post to Feishu group #daily-briefing
+```
+
+**Scenario 2: meeting note cleanup**
+
+```
+Trigger: user sends transcript or recording to Telegram
+Execution: extract decisions, action items, owners
+Output: reply with structured notes + optionally write to Feishu doc
+```
+
+**Scenario 3: link summarizer**
+
+```
+Trigger: user posts a URL in the channel
+Execution: fetch page → detect language → generate summary
+Output: reply directly under the same message
+```
+
+**Scenario 4: scheduled health check alert**
+
+```
+Trigger: every 30 minutes
+Execution: call target API → check status code and response time
+Output: silent when healthy, Feishu alert + log entry on failure
+```
+
+## Core concepts before you start configuring
+
+Get comfortable with these terms before you touch any settings.
+
+### Agent
+
+The agent is the execution unit. It receives channel input, decides which skills to call, generates output, and sends results to the right destination.
+
+Every agent has:
+- **A system prompt**: defines its role and behavior boundaries
+- **An allowed skills list**: what capabilities it can invoke
+- **Workspace access**: what it can read and write
+
+### Channel
+
+A channel is how the agent receives messages. Each channel has its own setup:
+
+- **Feishu**: create an enterprise self-built app, get App ID and App Secret, configure the webhook callback URL
+- **Telegram**: use BotFather to create a bot, get the bot token, set the webhook URL
+- **CLI**: call directly from the terminal — best for local testing and development
+
+### Skills
+
+Skills are the specific capabilities an agent can invoke. OpenClaw ships with built-in skills and supports custom ones:
+
+- `web-search`: search the web
+- `summarize`: summarize content
+- `read-file`: read a workspace file
+- `write-file`: write to a workspace file
+- Custom skills: call any external service via API
+
+### Workspace
+
+The workspace is the agent's persistent context. The most important file is `AGENTS.md`, which defines behavior rules, permission boundaries, and task instructions.
+
+```markdown
+# AGENTS.md example snippet
+
+## Role definition
+You are an assistant responsible for organizing and distributing information.
+
+## Behavior rules
+- When a URL is received, automatically generate a summary in the user's language
+- Do not guess intent when unclear — ask for confirmation first
+- After each execution, write a timestamped record to workspace/logs/
+
+## Permission scope
+- May read from workspace/briefings/
+- May write to workspace/logs/
+- Must not post to any channel other than #general
+```
+
+## It does not become powerful just because you chat with it more
+
+The upper bound of OpenClaw is usually not about fancy prompting. It depends on whether these pieces are connected:
+
+- **Is the entry point wired up**: what triggers it, and where does the message come from?
+- **Is the capability layer installed**: does it have the skills, commands, or integrations it needs?
+- **Are the rules clear**: what should it execute automatically, and what needs confirmation?
+- **Is there a real output destination**: channel reply, document, notification, or workspace?
+- **Can the loop be repeated**: will this run reliably again next time?
+
+That is why many people install OpenClaw and still feel it is underwhelming. They finished installation, but they did not finish system design.
+
+## Ask yourself these 4 questions first
+
+If you can answer these clearly, OpenClaw is usually a stronger fit than a generic chat tool:
+
+1. **Is this task going to happen repeatedly?** If it only happens once, it is not worth configuring.
+2. **Do I want it triggered through a channel or command?** Or will you copy-paste every time?
+3. **Do I need it to use tools, skills, or workspace files?** Pure chat does not need OpenClaw.
+4. **Do I want an output that can be checked, shared, or stored?** Or is a vague response fine?
+
+If the answers are mostly yes, you are not just "trying an AI tool." You are building an AI workflow that can be invoked repeatedly.
+
+## Common beginner mistakes
+
+The most common problem is not installation. It is getting the order of thinking wrong:
+
+| Wrong order | Right order |
+|-------------|-------------|
+| Tune model settings before defining the task | Define the task and expected output first |
+| Install many skills before validating the minimum loop | Get one shortest loop working first |
+| Aim for "it can do everything" | Prove one thing runs reliably |
+| Start with a complex multi-agent system | Get the first message round-trip working |
+
+That feels like progress, but nothing meaningful has actually been verified.
+
+## What you should be clear on before moving on
+
+Before continuing, make sure these three statements are true:
+
+- You are solving a repeatable task, not building a one-time demo.
+- You need a stable "input → execution → output" loop, not just chat.
+- Your first goal is not scale. It is getting one shortest-path loop to work.
+
+## A better next move
+
+Once the mental model is correct, move to **minimal installation**. The goal is not full architecture. The goal is to prove one healthy chain: the process starts, the model authenticates, and logs are visible.

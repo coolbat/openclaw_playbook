@@ -1,0 +1,38 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Install & environment"
+title: "Dependencies drifted after install"
+summary: "OpenClaw worked once, then started failing after a restart or small local change."
+symptom: "OpenClaw worked once, then started failing after a restart or small local change."
+readingTime: "4 min"
+tags: []
+checks: [
+  "Check versions against the known-good setup",
+  "Compare lockfiles or install logs",
+  "Reproduce in the smallest clean environment"
+]
+commonCauses: [
+  "Runtime version mismatch",
+  "A package upgraded unexpectedly",
+  "Docker or system dependency changed"
+]
+ctaLabel: "Continue"
+ctaHref: "/learn/"
+---
+## What this symptom usually means
+
+Something underneath your workflow changed: runtime version, package state, Docker behavior, or a system dependency. Treat the environment as unstable until proven otherwise.
+
+## First recovery loop
+
+Compare the current environment against the last known-good state. Look at versions, install logs, lockfiles, and anything that may have updated silently.
+
+## What to verify next
+
+Try to reproduce the issue in a smaller, cleaner environment. If the failure disappears there, the drift is local rather than intrinsic to OpenClaw.
+
+## If the issue persists
+
+Freeze the runtime and reintroduce changes one by one. That is slower, but it gives you a real cause instead of a guess.

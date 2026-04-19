@@ -89,7 +89,24 @@ const themeOptions = [
     <link href={altEn} hreflang="en" rel="alternate" />
     <link href={altZh} hreflang="zh-CN" rel="alternate" />
     <link href={altEn} hreflang="x-default" rel="alternate" />
-    <link href="/icon.svg" rel="icon" />
+    <link href="/icon.svg" rel="icon" type="image/svg+xml" />
+    <link href="/favicon-32x32.png" rel="icon" sizes="32x32" type="image/png" />
+    <link href="/favicon-16x16.png" rel="icon" sizes="16x16" type="image/png" />
+    <link href="/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180" />
+    <link href={locale === "zh" ? "/zh/rss.xml" : "/rss.xml"} rel="alternate" title={siteConfig.name} type="application/rss+xml" />
+    <script type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": siteConfig.name,
+      "url": siteConfig.domain,
+      "description": locale === "zh" ? siteConfig.description.zh : siteConfig.description.en,
+      "inLanguage": locale === "zh" ? "zh-CN" : "en",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": `${siteConfig.domain}${locale === "zh" ? "/zh" : ""}/search/?q={search_term_string}`,
+        "query-input": "required name=search_term_string"
+      }
+    })} />
     <slot name="head" />
   </head>
   <body>
@@ -99,14 +116,14 @@ const themeOptions = [
           <div class="nav-left">
             <a class="brand" href={localizePath("/", locale)}>{siteConfig.name}</a>
             <nav class="menu">
-              <a class:list={[path === "/" && "is-active"]} href={localizePath("/", locale) + "#quick-start"}>Quick Start</a>
+              <a class:list={[path === "/" && "is-active"]} href={localizePath("/", locale) + "#quick-start"}>{locale === "zh" ? "快速开始" : "Quick Start"}</a>
               {
                 siteConfig.navigation.map((item) => (
                   <a
                     class:list={[active === item.key && "is-active"]}
                     href={localizePath(item.href, locale)}
                   >
-                    {item.label}
+                    {locale === "zh" ? item.labelZh : item.label}
                   </a>
                 ))
               }
@@ -212,7 +229,7 @@ const themeOptions = [
                 data-mobile-link
                 href={localizePath("/", locale) + "#quick-start"}
               >
-                Quick Start
+                {locale === "zh" ? "快速开始" : "Quick Start"}
               </a>
               {
                 siteConfig.navigation.map((item) => (
@@ -221,7 +238,7 @@ const themeOptions = [
                     data-mobile-link
                     href={localizePath(item.href, locale)}
                   >
-                    {item.label}
+                    {locale === "zh" ? item.labelZh : item.label}
                   </a>
                 ))
               }
@@ -314,6 +331,16 @@ const themeOptions = [
         </div>
       </footer>
     </div>
+    <button
+      aria-label={locale === "zh" ? "回到顶部" : "Back to top"}
+      class="back-to-top"
+      data-back-to-top
+      type="button"
+    >
+      <svg aria-hidden="true" fill="none" height="20" viewBox="0 0 24 24" width="20">
+        <path d="M12 19V5m0 0l-7 7m7-7l7 7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+      </svg>
+    </button>
     <script is:inline>
       (() => {
         const storageKey = "theme-preference";
@@ -439,6 +466,16 @@ const themeOptions = [
         });
 
         applyTheme(getStoredTheme());
+
+        const backToTop = document.querySelector("[data-back-to-top]");
+        if (backToTop instanceof HTMLElement) {
+          window.addEventListener("scroll", () => {
+            backToTop.classList.toggle("is-visible", window.scrollY > 400);
+          }, { passive: true });
+          backToTop.addEventListener("click", () => {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          });
+        }
       })();
     </script>
   </body>

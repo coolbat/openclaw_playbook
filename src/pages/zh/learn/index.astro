@@ -10,17 +10,21 @@ const entries = await getLocalizedCollection("learn", locale);
 const categories = getUniqueCategories(entries);
 ---
 
-<BaseLayout active="learn" description="Learn 资源中心模板页。" locale={locale} path="/learn/" title="Learn | AnyPlaybook">
+<BaseLayout active="learn" description="围绕认知模型、环境搭建、工作流设计和更稳使用方式展开的 OpenClaw 长文栏目。" locale={locale} path="/learn/" title="Learn | OpenClaw101">
   <PageHero
     className="page-hero hero-single"
+    ctas={[
+      { href: localizePath("/#quick-start", locale), label: "回看 Quick Start", variant: "secondary" },
+      { href: localizePath("/templates/", locale), label: "查看入门模板", variant: "primary" },
+    ]}
     highlights={[
-      `${entries.length} 篇示例长文`,
-      "已内置面包屑与上下文导航",
-      "支持草稿与时间元数据",
+      `${entries.length} 篇深入教程`,
+      "覆盖基础认知、环境搭建、工作流设计和中文生态",
+      "包含排错恢复与日常使用技巧",
     ]}
     kicker="LEARN HUB"
-    summary="用于概念、策略、工作流设计和更稳使用习惯的长文栏目。"
-    title="先理解，再扩展。"
+    summary="把 Learn 当成你的教程书架：这里集中放基础认知、环境搭建、工作流设计、中文生态、排错恢复和日常使用技巧。"
+    title="Learn 是更深入的 OpenClaw 资源中心。"
   />
   <div class="filter-rail" data-filter-group="learn">
     <button class="filter-button is-active" data-filter="all" type="button">全部分类</button>
@@ -31,7 +35,7 @@ const categories = getUniqueCategories(entries);
   <div class="grid cols-3">
     {entries.map((entry) => (
       <div data-filter-item={entry.data.category}>
-        <ArticleCard eyebrow={entry.data.category} href={localizePath(`/learn/${getRouteSlug(entry)}/`, locale)} summary={entry.data.summary} title={entry.data.title} />
+        <ArticleCard eyebrow={entry.data.category} href={localizePath(`/learn/${getRouteSlug(entry)}/`, locale)} locale={locale} summary={entry.data.summary} title={entry.data.title} />
       </div>
     ))}
   </div>

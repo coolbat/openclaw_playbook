@@ -1,0 +1,38 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Install & environment"
+title: "Environment variables are inconsistent"
+summary: "The same command behaves differently across shells, restarts, or deployment attempts."
+symptom: "The same command behaves differently across shells, restarts, or deployment attempts."
+readingTime: "4 min"
+tags: []
+checks: [
+  "List the active env source",
+  "Compare runtime values with expected values",
+  "Remove duplicate or legacy config files"
+]
+commonCauses: [
+  "Variables loaded in one shell only",
+  "Multiple env files competing",
+  "Secrets copied with stale values"
+]
+ctaLabel: "Continue"
+ctaHref: "/learn/"
+---
+## What this symptom usually means
+
+Configuration drift is the first suspect. Values may be loaded from different files or shells, making the system appear random when it is actually inconsistent.
+
+## First recovery loop
+
+List the active config source and compare the values OpenClaw sees at runtime with the values you believe should be active.
+
+## What to verify next
+
+Remove duplicate env files, stale examples, or copied tokens that no longer match the current workspace. You want one source of truth, not three possible ones.
+
+## If the issue persists
+
+Test the same configuration in a clean shell or fresh session. That tells you whether the inconsistency is in the environment or in the application behavior.

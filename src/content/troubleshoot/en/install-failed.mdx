@@ -1,0 +1,38 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Install & environment"
+title: "Install path never stabilizes"
+summary: "You can install some pieces, but the system never becomes predictably runnable."
+symptom: "You can install some pieces, but the system never becomes predictably runnable."
+readingTime: "4 min"
+tags: []
+checks: [
+  "Re-run the minimal install path",
+  "Confirm each dependency separately",
+  "Stop at the first failing health check"
+]
+commonCauses: [
+  "Wrong install path",
+  "Partial environment setup",
+  "Optional services added before core health checks passed"
+]
+ctaLabel: "Continue"
+ctaHref: "/learn/"
+---
+## What this symptom usually means
+
+This often means the install path is too wide. Optional services, partial configuration, or path mistakes create a system that looks half-working but never becomes dependable.
+
+## First recovery loop
+
+Return to the smallest viable setup. Install only what is necessary to reach one healthy baseline, then stop.
+
+## What to verify next
+
+Check every dependency separately and stop at the first failing health check. If several parts are broken at once, narrow until only one failure remains visible.
+
+## If the issue persists
+
+Compare your current path with a documented minimal setup. Most long install problems come from drift, not from one exotic bug.

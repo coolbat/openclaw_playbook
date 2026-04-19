@@ -19,7 +19,7 @@ const { tag } = Astro.props;
 const sections = await getEntriesByTag("zh", tag.slug);
 ---
 
-<BaseLayout active="none" description={`标签 ${tag.label} 的聚合页。`} locale="zh" path={`/tags/${tag.slug}/`} title={`${tag.label} | 标签 | AnyPlaybook`}>
+<BaseLayout active="none" description={`标签 ${tag.label} 的聚合页。`} locale="zh" path={`/tags/${tag.slug}/`} title={`${tag.label} | 标签 | OpenClaw101`}>
   <section class="section">
     <div class="card page-prose">
       <p class="eyebrow">TAG</p>

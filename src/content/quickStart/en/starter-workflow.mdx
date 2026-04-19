@@ -1,0 +1,308 @@
+---
+locale: en
+publishedAt: 2026-04-11
+updatedAt: 2026-04-11
+step: "04"
+title: "Run a Starter Workflow"
+summary: "Pick a workflow with clear output, short feedback loops, and failures you can diagnose."
+readingTime: "15 min"
+bullets: [
+  "Pick a workflow with short feedback loops.",
+  "Prefer outputs you can inspect quickly, such as briefings or summaries.",
+  "Keep scope small enough that failure is diagnosable."
+]
+tags: []
+---
+The goal of your first workflow is not to impress anyone. It is to prove that OpenClaw can reliably produce a result you can inspect quickly. Think of it as a test track, not the final system.
+
+The channel is working, which means messages can come in and go out. What you need to prove now is: once a message arrives, **does the flow complete as expected?**
+
+## Recommended first workflow: link summarizer
+
+The link summarizer is the best starting point for four reasons:
+
+- Simple trigger: user sends a URL
+- Minimal dependencies: no additional external accounts or authentication needed
+- Verifiable result: you can look at the summary and immediately know if it is right
+- Easy to debug: either the URL was not fetched, or the model was not called — the failure is obvious
+
+### Full setup steps
+
+#### Step 1: add behavior rules to AGENTS.md
+
+Open `workspace/AGENTS.md` and add the following:
+
+```markdown
+## Link Summary Rules
+
+When the user sends a URL:
+
+1. Fetch the main content of the page
+2. Detect the page language
+3. Generate a summary in the user's language (150–300 words)
+4. Reply in this format:
+
+**Summary**
+[summary content]
+
+**Source**: [original URL]
+**Language**: [original page language]
+```
+
+#### Step 2: enable the web-summary skill in your config
+
+Open `openclaw.config.json` and add to the `skills` array:
+
+```json
+{
+  "version": "1",
+  "agent": {
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "systemPrompt": "workspace/AGENTS.md"
+  },
+  "workspace": {
+    "root": "./workspace"
+  },
+  "channels": [
+    {
+      "type": "telegram",
+      "token": "${TELEGRAM_BOT_TOKEN}",
+      "mode": "webhook",
+      "webhookPath": "/webhook/telegram"
+    }
+  ],
+  "skills": [
+    {
+      "name": "web-summary",
+      "enabled": true
+    }
+  ]
+}
+```
+
+#### Step 3: restart OpenClaw
+
+```bash
+openclaw start
+```
+
+The startup log should now show the skill loaded:
+
+```
+[openclaw] Starting OpenClaw v0.x.x
+[openclaw] Loading config: ./openclaw.config.json
+[openclaw] Provider: openai (gpt-4o-mini)
+[openclaw] Authenticating with OpenAI... OK
+[openclaw] Channel: telegram — webhook registered at /webhook/telegram
+[openclaw] Skills: web-summary (enabled)
+[openclaw] Ready.
+```
+
+#### Step 4: send a test link
+
+Go to Telegram, find your bot, and send a URL:
+
+```
+https://openai.com/blog/gpt-4o
+```
+
+Expected reply format:
+
+```
+**Summary**
+GPT-4o is OpenAI's latest flagship model, capable of handling text, audio,
+and image inputs simultaneously…
+
+**Source**: https://openai.com/blog/gpt-4o
+**Language**: English
+```
+
+If you see a formatted reply like this, your first workflow is running.
+
+## What you are actually verifying
+
+This workflow is simple, but it validates every link in the chain at once:
+
+```
+[User sends URL]
+      │
+      ▼
+[Telegram pushes event to Webhook]
+      │
+      ▼
+[OpenClaw receives the message]
+      │
+      ▼
+[Message router identifies trigger type]
+      │ detects URL → invokes web-summary skill
+      ▼
+[web-summary skill fetches the page]
+      │
+      ▼
+[Agent calls model to generate summary]
+      │
+      ▼
+[Result formatted according to AGENTS.md template]
+      │
+      ▼
+[Sent back to Telegram]
+```
+
+If any link breaks, you can locate it quickly in the logs.
+
+## How to write AGENTS.md effectively
+
+`AGENTS.md` is the core behavior file for your OpenClaw agent. It tells the agent:
+
+- What to do
+- What not to do
+- How to handle specific types of input
+- What the output format should look like
+
+A solid starter `AGENTS.md` structure:
+
+```markdown
+# Role Definition
+
+You are an information assistant. Your job is to help users process links,
+article summaries, and briefings.
+
+# Behavior Rules
+
+## Link handling
+- When you receive a URL, fetch the main page content
+- Generate a summary in the user's language (150–300 words)
+- Reply using the specified format template
+
+## General rules
+- If the user's intent is unclear, ask for clarification before acting
+- Summarize only key information — do not add speculation
+- After each execution, confirm the result with the user
+
+# Permission Scope
+- May read publicly accessible web pages
+- May write to workspace/logs/ directory
+- Must not access content that requires login
+```
+
+> Keep the first version focused. One scenario, clear rules, no edge cases yet.
+
+## How to choose your first workflow
+
+If you are not doing the link summarizer, any other starting point works — as long as it meets one criterion:
+
+**Can you complete one full test cycle in under 5 minutes?**
+
+Tasks that usually pass this check:
+
+| Task type | Trigger | Output | Verification difficulty |
+|-----------|---------|--------|------------------------|
+| Link summarizer | User sends URL | Formatted summary | Low |
+| Text to bullet points | User pastes text | Structured points | Low |
+| Daily briefing | Cron (scheduled) | Briefing sent to channel | Medium |
+| Simple Q&A | User asks question | Direct reply | Low |
+| Format converter | User sends content | Reformatted reply | Low |
+
+Tasks that usually fail this check:
+
+- Requires 3 or more external APIs
+- Depends on long-running context or accumulated memory
+- Has an unclear or unstable trigger condition
+- Has complex output that is expensive to validate manually
+
+## Checklist before running
+
+Before the first run, confirm:
+
+- Skill names in the config file exactly match OpenClaw's built-in skill names
+- `AGENTS.md` has explicit handling rules for this type of input
+- The trigger channel is connected (messages travel both ways)
+- You know where to look for skill invocation records in the logs
+
+After a successful run, confirm:
+
+- Output format matches the `AGENTS.md` template
+- Logs show a complete execution trace (from trigger to reply)
+- You can reproduce the same result in 3 steps or fewer
+
+## If the workflow does not run as expected
+
+### Message sent, bot silent
+
+Rule out channel issues first:
+
+```bash
+openclaw status
+# confirm the process is running
+
+curl "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo"
+# confirm the Webhook is registered and the URL is reachable
+```
+
+### Bot replies, but skill was not invoked
+
+Check the logs:
+
+```bash
+openclaw start --log-level debug
+```
+
+In the debug output, search for `skill` to see whether an invocation happened:
+
+```
+[openclaw] Skill invoked: web-summary
+[openclaw] Fetching URL: https://openai.com/blog/gpt-4o
+```
+
+If that line is missing, the agent did not recognize this input as a skill trigger. Check that the rule in `AGENTS.md` is specific enough.
+
+### Skill ran but returned empty or an error
+
+```
+[openclaw] Skill error: web-summary — unable to fetch page content
+```
+
+Possible causes:
+- The page requires a login (web-summary only fetches public pages)
+- The page has anti-scraping protection
+- Network connectivity problem
+
+Try a simpler public page:
+
+```
+https://example.com
+```
+
+### Result returned but format is wrong
+
+Review the format template in `AGENTS.md`:
+
+1. Is the format description precise? (The agent needs explicit instructions, not vague words like "should be concise")
+2. Are there ambiguities? (Instead of "short," write "150–300 words")
+
+## Patterns to avoid for now
+
+These are powerful, but they are poor first workflows:
+
+- Multi-agent collaboration systems
+- Long automation chains across multiple SaaS tools
+- Workflows that depend on rich long-term memory
+- Content factories with dozens of steps
+- Systems that require browser login state, complicated permissions, and multi-channel distribution
+
+Those are valid goals — but they belong after you already have one small path working reliably.
+
+## What to record once it works
+
+When the first workflow succeeds, write down these three things:
+
+- **Trigger**: what you sent to trigger it (URL / keyword / scheduled / command)
+- **Success sample**: screenshot or copy of one real successful reply
+- **First debug point**: where you look first when it breaks (logs / channel / skill invocation records)
+
+This becomes your reference sample for future templates, skills, and scheduled tasks. When more complex flows break, you can always fall back to this shortest known-good path.
+
+## A better next move
+
+Once one workflow runs reliably, you can deepen your foundations in **Learn** or expand with **Templates** that match your goals. If the workflow is not running yet, make it smaller — do not expand the scope first.

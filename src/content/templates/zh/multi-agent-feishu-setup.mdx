@@ -1,0 +1,147 @@
+---
+locale: zh
+publishedAt: 2026-04-08
+updatedAt: 2026-04-08
+category: "中文生态"
+title: "多 Agent 飞书协作配置"
+summary: "为每个机器人配置独立工作区，通过 bindings 把每个飞书账号精准路由到对应的 Agent 大脑。"
+readingTime: "7 分钟"
+difficulty: "高级"
+time: "40 分钟"
+risk: "中风险"
+channels: [
+  "飞书"
+]
+recommendedFor: "适合希望在同一个 OpenClaw 实例里管理多个飞书机器人、每个机器人有独立人设和模型的团队。"
+tags: [
+  "多 Agent",
+  "飞书",
+  "路由"
+]
+---
+## 什么时候用这个模板
+
+当一个飞书机器人不够用的时候。常见场景：
+
+- 你想要一个通用助手机器人和一个专门做代码审查的机器人同时在线
+- 不同团队需要不同的 AI 人设或模型选择
+- 你想用 Claude 处理推理任务、用本地模型处理日常事务，都通过飞书访问
+
+一个 OpenClaw 实例可以管理所有这些。关键是三个核心概念：Accounts、Agents 和 Bindings。
+
+## 核心架构
+
+| 概念 | 是什么 | 类比 |
+|------|--------|------|
+| **Accounts** | 飞书开放平台的 App ID + Secret | 机器人的"身份证" |
+| **Agents** | 独立的 Workspace，含 SOUL.md 和 MEMORY.md | 机器人的"大脑" |
+| **Bindings** | 把账号路由到 Agent 的规则 | 快递的"分拣规则" |
+
+一个账号对应一个 Agent。一个 Agent 可以服务多个账号。Bindings 是连接它们的路由表。
+
+## 最小配置
+
+**第一步：创建独立工作区**
+
+每个 Agent 需要自己的目录，实现记忆和人设的物理隔离：
+
+```bash
+mkdir -p ~/.openclaw/workspaces/assistant_workspace
+mkdir -p ~/.openclaw/workspaces/coder_workspace
+```
+
+给每个工作区写一份 `SOUL.md`，定义这个机器人的性格和职责。
+
+**第二步：配置 openclaw.json**
+
+```json
+{
+  "agents": {
+    "list": [
+      {
+        "id": "agent_assistant",
+        "workspace": "~/.openclaw/workspaces/assistant_workspace",
+        "model": "your-provider/claude-sonnet-4-6"
+      },
+      {
+        "id": "agent_coder",
+        "workspace": "~/.openclaw/workspaces/coder_workspace",
+        "model": "your-provider/claude-opus-4-6"
+      }
+    ]
+  },
+  "bindings": [
+    {
+      "agentId": "agent_assistant",
+      "match": { "channel": "feishu", "accountId": "assistant_bot" }
+    },
+    {
+      "agentId": "agent_coder",
+      "match": { "channel": "feishu", "accountId": "coder_bot" }
+    }
+  ],
+  "channels": {
+    "feishu": {
+      "enabled": true,
+      "accounts": {
+        "assistant_bot": {
+          "appId": "你的 App ID 1",
+          "appSecret": "你的 App Secret 1",
+          "botName": "助手"
+        },
+        "coder_bot": {
+          "appId": "你的 App ID 2",
+          "appSecret": "你的 App Secret 2",
+          "botName": "代码专家"
+        }
+      }
+    }
+  },
+  "tools": {
+    "agentToAgent": {
+      "enabled": true,
+      "allow": ["agent_assistant", "agent_coder"]
+    }
+  }
+}
+```
+
+**第三步：重启并验证**
+
+```bash
+openclaw gateway restart
+```
+
+分别给两个机器人发私信，确认它们用各自的人设回复。
+
+## 常见坑
+
+**机器人在线但群里不回复**
+
+飞书应用缺少 `cardkit:card:write` 权限。去飞书开放平台 → 应用权限 → 开通 `cardkit:card:write` → 创建新版本 → 提交管理员审核。权限必须经过发版流程才能生效。
+
+**机器人 A 用了机器人 B 的人设回复**
+
+`bindings` 里没有指定 `accountId`，导致路由不明确。始终在 match 里同时指定 `channel` 和 `accountId`：
+
+```json
+{ "agentId": "agent_coder", "match": { "channel": "feishu", "accountId": "coder_bot" } }
+```
+
+**群聊需要 @ 才触发**
+
+在 groups 配置里加上群组 ID 和 `requireMention: true`：
+
+```json
+"groups": {
+  "oc_你的群组ID": { "requireMention": true }
+}
+```
+
+## 好的效果是什么样的
+
+每个机器人用自己的声音回复，各司其职。助手机器人处理通用问题和协调事务，代码专家机器人处理技术审查和实现问题。两者不互相越界。
+
+## 第一步扩展
+
+路由稳定之后，开启 Agent 间通信，让助手机器人可以自动把技术任务委托给代码专家机器人。上面配置里的 `agentToAgent` 块已经开启了这个能力——只需要在助手机器人的 `AGENTS.md` 里说明什么时候该委托即可。

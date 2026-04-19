@@ -4,22 +4,22 @@ export type Locale = (typeof locales)[number];
 export const defaultLocale: Locale = "en";
 
 export const siteConfig = {
-  name: "AnyPlaybook",
+  name: "OpenClaw101",
   tagline: {
-    en: "Static tutorial site template for product playbooks.",
-    zh: "用于产品教程站和 playbook 站点的静态模板。",
+    en: "Bilingual OpenClaw tutorials from first setup to repeatable workflows.",
+    zh: "从首次安装到可重复工作流的 OpenClaw 双语教程站。",
   },
   description: {
-    en: "A bilingual Astro template for quick-start tutorials, learning hubs, template libraries, resource directories, and troubleshooting guides.",
-    zh: "一个双语 Astro 模板，用于构建 Quick Start、Learn、Templates、Resources 和 Troubleshoot 结构的教程站。",
+    en: "A bilingual OpenClaw learning hub covering quick start onboarding, deeper guides, starter templates, skills, and troubleshooting.",
+    zh: "一个面向 OpenClaw 的双语学习站，覆盖 Quick Start、深入指南、起步模板、技能目录和排错恢复。",
   },
-  domain: "https://example.anyplaybook.dev",
-  socialImage: "/icon.svg",
+  domain: "https://openclaw101.space",
+  socialImage: "/og-image.png",
   navigation: [
-    { href: "/learn/", label: "Learn", key: "learn" },
-    { href: "/templates/", label: "Templates", key: "templates" },
-    { href: "/skills/", label: "Resources", key: "skills" },
-    { href: "/troubleshoot/", label: "Troubleshoot", key: "troubleshoot" },
+    { href: "/learn/", label: "Learn", labelZh: "学习", key: "learn" },
+    { href: "/templates/", label: "Templates", labelZh: "模板", key: "templates" },
+    { href: "/skills/", label: "Skills", labelZh: "技能", key: "skills" },
+    { href: "/troubleshoot/", label: "Troubleshoot", labelZh: "排错", key: "troubleshoot" },
   ],
   footerLinks: [
     { href: "/about/", en: "About", zh: "关于" },
@@ -28,6 +28,6 @@ export const siteConfig = {
     { href: "/terms/", en: "Terms", zh: "条款" },
   ],
   officialLinks: [
-    { href: "https://github.com/your-org/anyplaybook", label: "GitHub" },
+    { href: "https://github.com/openclaw/openclaw", label: "OpenClaw GitHub" },
   ],
 };

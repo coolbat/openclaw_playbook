@@ -1,0 +1,33 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Advanced Troubleshooting"
+title: "Permission and Sandbox Failures"
+summary: "Recognize when the issue is not your workflow logic but the environment boundary around it."
+readingTime: "9 min"
+tags: [
+  "Permissions",
+  "Sandbox",
+  "Environment"
+]
+---
+## Not every failure is logical
+
+Sometimes the workflow design is fine. The task fails because the environment will not allow the system to do what the workflow expects.
+
+## Common signs
+
+- file access denied
+- command not allowed
+- browser action blocked
+- network request unexpectedly rejected
+
+## What to check
+
+- which tool attempted the action
+- whether the environment allows it
+- whether the workflow assumed broader access than exists
+
+> **Boundary first, logic second**
+>   If the system is blocked by permissions, rewriting the workflow rarely helps.

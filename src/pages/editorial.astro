@@ -1,11 +1,19 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getEntryBySlug } from "@/lib/content";
+
+const entry = await getEntryBySlug("pages", "en", "editorial");
+if (!entry) {
+  throw new Error('Missing "editorial" page content for locale "en".');
+}
+
+const { Content } = await entry.render();
 ---
 
-<BaseLayout active="none" description="Example editorial policy for AnyPlaybook." locale="en" path="/editorial/" title="Editorial Policy | AnyPlaybook">
-  <article class="section card page-prose">
-    <h1>Editorial Policy</h1>
-    <p>AnyPlaybook assumes tutorial sites should optimize for clarity, verification, and durable information architecture.</p>
-    <p>Update content when setup changes materially, a guide becomes misleading, or a stronger canonical workflow appears.</p>
+<BaseLayout active="none" description={entry.data.summary} locale="en" path="/editorial/" title={`${entry.data.title} | OpenClaw101`}>
+  <article class="section card page-prose" data-pagefind-body>
+    <h1>{entry.data.title}</h1>
+    <p class="sub">{entry.data.summary}</p>
+    <Content />
   </article>
 </BaseLayout>

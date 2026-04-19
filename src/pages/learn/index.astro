@@ -10,17 +10,21 @@ const entries = await getLocalizedCollection("learn", locale);
 const categories = getUniqueCategories(entries);
 ---
 
-<BaseLayout active="learn" description="Learn hub for a tutorial template." locale={locale} path="/learn/" title="Learn | AnyPlaybook">
+<BaseLayout active="learn" description="Long-form OpenClaw guides for mental models, setup strategy, workflow design, and safer operating habits." locale={locale} path="/learn/" title="Learn | OpenClaw101">
   <PageHero
     className="page-hero hero-single"
+    ctas={[
+      { href: localizePath("/#quick-start", locale), label: "Review Quick Start", variant: "secondary" },
+      { href: localizePath("/templates/", locale), label: "Browse starter templates", variant: "primary" },
+    ]}
     highlights={[
       `${entries.length} starter articles`,
-      "Breadcrumb + neighbors built in",
-      "Draft-aware content model",
+      "Foundations, setup strategy, workflow design, and Chinese ecosystem guidance",
+      "Recovery paths and practical operating tips",
     ]}
     kicker="LEARN HUB"
-    summary="Longer-form articles for concepts, setup strategy, workflow design, and safer operating habits."
-    title="Learn before you scale."
+    summary="Use Learn as your tutorial shelf for foundations, setup strategy, workflow design, Chinese ecosystem patterns, recovery paths, and day-to-day operating tips."
+    title="Learn is the deeper OpenClaw resource hub."
   />
   <div class="filter-rail" data-filter-group="learn">
     <button class="filter-button is-active" data-filter="all" type="button">All categories</button>
@@ -31,7 +35,7 @@ const categories = getUniqueCategories(entries);
   <div class="grid cols-3">
     {entries.map((entry) => (
       <div data-filter-item={entry.data.category}>
-        <ArticleCard eyebrow={entry.data.category} href={localizePath(`/learn/${getRouteSlug(entry)}/`, locale)} summary={entry.data.summary} title={entry.data.title} />
+        <ArticleCard eyebrow={entry.data.category} href={localizePath(`/learn/${getRouteSlug(entry)}/`, locale)} locale={locale} summary={entry.data.summary} title={entry.data.title} />
       </div>
     ))}
   </div>

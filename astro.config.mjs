@@ -4,7 +4,7 @@ import sitemap from "@astrojs/sitemap";
 import remarkGfm from "remark-gfm";
 
 export default defineConfig({
-  site: "https://example.anyplaybook.dev",
+  site: "https://openclaw101.space",
   integrations: [mdx(), sitemap()],
   markdown: {
     remarkPlugins: [remarkGfm],

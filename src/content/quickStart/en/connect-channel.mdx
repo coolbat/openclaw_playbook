@@ -1,0 +1,399 @@
+---
+locale: en
+publishedAt: 2026-04-11
+updatedAt: 2026-04-11
+step: "03"
+title: "Connect a Chat Channel"
+summary: "The real first milestone is a complete message round-trip, not just a successful install."
+readingTime: "14 min"
+bullets: [
+  "Choose one easy first channel such as Telegram or Feishu.",
+  "Send one test message and confirm the bot responds.",
+  "If the bot stays silent, debug the channel before adding skills."
+]
+tags: []
+---
+Installation only proves the system can start. Connecting a channel proves the system can **receive, route, and reply**. This step matters because it is the first time "OpenClaw running in the background" becomes "OpenClaw you can actually use."
+
+## What success looks like
+
+You send a test message through a real channel and get a real response back.
+
+Simple as that — but it confirms a lot at once:
+
+- The bot is reachable
+- The channel binding is working
+- The message path is valid
+- The model call succeeds under real conditions
+- The result makes it back to the channel
+
+If you send a message and get one back, you have completed one of the most important milestones in the Quick Start.
+
+## First channel: start with Telegram
+
+Telegram is the recommended starting point for a simple reason:
+
+- Bot token registration requires no enterprise account or approval process
+- Webhook setup has fewer steps and solid documentation
+- Message round-trip latency is low — fast debug feedback
+- No private network tunneling required (just public internet access)
+
+If your team runs primarily on Feishu, you can jump straight to the Feishu section. But it is worth getting Telegram working first to establish a baseline before adding Feishu.
+
+## Telegram channel setup (full steps)
+
+### Step 1: create a Telegram bot
+
+Find [@BotFather](https://t.me/BotFather) on Telegram and send:
+
+```
+/start
+/newbot
+```
+
+BotFather will ask for a bot name and username (the username must end with `bot`):
+
+```
+Name: My OpenClaw Bot
+Username: my_openclaw_bot
+```
+
+After creation, BotFather replies with your bot token in this format:
+
+```
+Done! Use this token to access the HTTP API:
+1234567890:AAFsomethingsomething_tokenstring
+```
+
+Copy the token. You will need it in the next step.
+
+### Step 2: add the token to your config
+
+Open `openclaw.config.json` and add a Telegram entry to the `channels` array:
+
+```json
+{
+  "version": "1",
+  "agent": {
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "systemPrompt": "workspace/AGENTS.md"
+  },
+  "workspace": {
+    "root": "./workspace"
+  },
+  "channels": [
+    {
+      "type": "telegram",
+      "token": "${TELEGRAM_BOT_TOKEN}",
+      "mode": "webhook",
+      "webhookPath": "/webhook/telegram"
+    }
+  ],
+  "skills": []
+}
+```
+
+> Do not put the token directly in the config file. Reference it via environment variable, and store the actual value in `.env`.
+
+Add this to your `.env` file:
+
+```bash
+TELEGRAM_BOT_TOKEN=1234567890:AAFsomethingsomething_tokenstring
+```
+
+### Step 3: register the Webhook URL
+
+Telegram requires a publicly accessible HTTPS URL to push message events to. For local development, use [ngrok](https://ngrok.com/) to create a temporary tunnel:
+
+```bash
+# install ngrok (mac)
+brew install ngrok/ngrok/ngrok
+
+# expose local port 3000 to the internet
+ngrok http 3000
+```
+
+ngrok prints a public URL like this:
+
+```
+Forwarding  https://abcd1234.ngrok.io -> http://localhost:3000
+```
+
+Copy that address, then register the Webhook with Telegram:
+
+```bash
+curl "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
+  -d "url=https://abcd1234.ngrok.io/webhook/telegram"
+```
+
+Successful response:
+
+```json
+{"ok":true,"result":true,"description":"Webhook was set"}
+```
+
+### Step 4: start OpenClaw and test
+
+```bash
+openclaw start
+```
+
+A healthy startup log now shows the channel connected:
+
+```
+[openclaw] Starting OpenClaw v0.x.x
+[openclaw] Loading config: ./openclaw.config.json
+[openclaw] Provider: openai (gpt-4o-mini)
+[openclaw] Authenticating with OpenAI... OK
+[openclaw] Channel: telegram — webhook registered at /webhook/telegram
+[openclaw] Ready.
+```
+
+Find your bot on Telegram and send:
+
+```
+hello
+```
+
+Expected reply:
+
+```
+Hello! How can I help you today?
+```
+
+If you see that reply, the Telegram channel is live.
+
+## Feishu channel setup (full steps)
+
+Feishu has a few more setup steps than Telegram, mainly because you need to create an enterprise self-built app in the Feishu Open Platform.
+
+### Step 1: create a Feishu self-built app
+
+Go to the Feishu Open Platform: [open.feishu.cn](https://open.feishu.cn)
+
+1. Log in and click "Developer Console"
+2. Click "Create Enterprise Self-Built App"
+3. Fill in the app name (e.g. `OpenClaw Bot`) and description
+4. After creation, go to "Credentials & Basic Info" and note down your `App ID` and `App Secret`
+
+### Step 2: configure bot permissions
+
+In the app detail page:
+
+1. Go to "Add App Capabilities" → select "Bot"
+2. Go to "Permission Management" and enable:
+   - `im:message:receive_v1` (receive messages)
+   - `im:message` (send messages)
+
+3. Publish an app version (permissions only take effect after the version is approved)
+
+### Step 3: fill in the OpenClaw config
+
+```json
+{
+  "channels": [
+    {
+      "type": "feishu",
+      "appId": "${FEISHU_APP_ID}",
+      "appSecret": "${FEISHU_APP_SECRET}",
+      "encryptKey": "${FEISHU_ENCRYPT_KEY}",
+      "verificationToken": "${FEISHU_VERIFICATION_TOKEN}",
+      "webhookPath": "/webhook/feishu"
+    }
+  ]
+}
+```
+
+Add to your `.env`:
+
+```bash
+FEISHU_APP_ID=cli_xxxxxxxxxxxxxxxx
+FEISHU_APP_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+FEISHU_ENCRYPT_KEY=your_encrypt_key_here
+FEISHU_VERIFICATION_TOKEN=your_verification_token_here
+```
+
+`encryptKey` and `verificationToken` are configured and retrieved from the "Events & Callbacks" page in the Feishu Open Platform.
+
+### Step 4: configure event subscriptions
+
+On the "Events & Callbacks" page:
+
+1. Set Request URL to: `https://your-domain.com/webhook/feishu`
+2. Subscribe to event type: `im.message.receive_v1` (receive messages)
+3. Save the configuration
+
+Feishu sends a verification request once — OpenClaw handles the response automatically.
+
+### Step 5: add the bot to a group or conversation
+
+Find your app in Feishu and add it to a target group, or start a direct conversation with the bot. Send a test message:
+
+```
+hello
+```
+
+If the bot replies, the Feishu channel is connected.
+
+## What one test message is actually verifying
+
+This step is not just checking "does the bot chat." It is validating an entire end-to-end chain:
+
+```
+[You send a message]
+      │
+      ▼
+[Channel platform (Telegram/Feishu) receives it]
+      │ pushes event to Webhook URL
+      ▼
+[OpenClaw receives the event]
+      │
+      ▼
+[Message router → agent execution engine]
+      │
+      ▼
+[Calls model (OpenAI/Anthropic/Gemini)]
+      │
+      ▼
+[Model returns result]
+      │ OpenClaw sends it back to the channel
+      ▼
+[You see the reply in the chat UI]
+```
+
+If any link in this chain breaks, the bot goes silent. That is why this step is worth doing early — it quickly rules out a large number of unknowns.
+
+## If the bot does not respond: check layer by layer
+
+### Check the OpenClaw process
+
+```bash
+openclaw status
+```
+
+If the process is not running:
+
+```bash
+openclaw start --log-level debug
+```
+
+### Check whether the Webhook registered successfully
+
+```bash
+# Telegram
+curl "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo"
+```
+
+Healthy response:
+
+```json
+{
+  "ok": true,
+  "result": {
+    "url": "https://abcd1234.ngrok.io/webhook/telegram",
+    "has_custom_certificate": false,
+    "pending_update_count": 0,
+    "last_error_date": 0
+  }
+}
+```
+
+If the `url` field is empty, the Webhook was never registered. Re-run `setWebhook`.
+
+If `last_error_message` has content, Telegram pushed events but OpenClaw returned errors:
+
+```json
+{
+  "last_error_message": "Connection refused"
+}
+```
+
+This usually means OpenClaw is not listening on that port, or the ngrok tunnel has expired.
+
+### Check public reachability
+
+```bash
+curl https://abcd1234.ngrok.io/webhook/telegram
+```
+
+If you get 404 or a connection timeout, the ngrok tunnel is gone. Run `ngrok http 3000` again and update the Webhook URL.
+
+### Narrow the problem to one of two categories
+
+| Symptom | Most likely cause |
+|---------|------------------|
+| Message sent, bot completely silent | Webhook not registered / process not running / not publicly reachable |
+| Bot responds but returns an error | Token invalid / model call failed / insufficient permissions |
+
+Once you identify which category, investigate that specific layer.
+
+## Common errors and fixes
+
+### Telegram: 401 Unauthorized
+
+```
+Error: Telegram API error 401: Unauthorized
+```
+
+Cause: bot token is wrong, or has been revoked.
+
+Fix: get a fresh token from BotFather. Make sure there are no extra spaces.
+
+```bash
+echo $TELEGRAM_BOT_TOKEN
+# confirm the output looks like a valid token
+```
+
+### Telegram: Webhook URL not reachable
+
+```
+Error: Failed to set webhook: Bad Request: wrong url host
+```
+
+Cause: the Webhook URL is not a valid HTTPS address, or ngrok has expired.
+
+Fix: confirm ngrok is running and the address starts with `https://`.
+
+### Feishu: event push verification failed
+
+```
+[feishu] Verification request failed: signature mismatch
+```
+
+Cause: `encryptKey` or `verificationToken` is misconfigured.
+
+Fix: go back to the Feishu Open Platform "Events & Callbacks" page, get the correct values, and update `.env`.
+
+### Bot added to group but not replying
+
+Cause: the bot does not have read and send permissions in the group, or the Feishu app permissions have not been published.
+
+Fix:
+
+1. Confirm the app version is published ("Version Management & Release" page)
+2. Confirm the permission scope includes `im:message`
+3. Remove the bot from the group and re-add it
+
+## The most common beginner mistake
+
+When the bot does not respond, many people immediately add more skills, tweak the prompt, or switch models. This usually makes the problem harder to diagnose, not easier.
+
+Before the channel loop is working, expanding functionality has almost no value.
+
+Another common mistake: treating "I can see `connected` in the backend logs" as success. The only real success criteria is: **you sent a message from the actual chat UI and the bot actually replied.**
+
+## What to confirm before moving on
+
+Before continuing, make sure these are all true:
+
+- You have selected a primary channel
+- You have completed at least one real message round-trip
+- You know which layer to check first when the channel fails (process → Webhook → permissions → logs)
+- You have not gotten pulled into multi-channel, multi-group, or multi-account complexity yet
+
+At this point, OpenClaw has moved from "installed on your machine" to "actually callable."
+
+## A better next move
+
+The channel is working — move to the **first starter workflow**. If the channel is not working yet, treat it as a channel problem, not a workflow problem. Do not start optimizing workflow design before you have a successful message round-trip.

@@ -1,0 +1,115 @@
+---
+locale: en
+publishedAt: 2026-04-08
+updatedAt: 2026-04-08
+category: "Research Analysis"
+title: "Demand Mining Automation Pipeline"
+summary: "A multi-step cron pipeline that discovers rising keywords, validates them against community signals, and delivers a ranked opportunity list each morning."
+readingTime: "8 min"
+difficulty: "Advanced"
+time: "45 min"
+risk: "Medium risk"
+channels: [
+  "Telegram",
+  "Email"
+]
+recommendedFor: "Solo builders or product teams who want a repeatable system for finding underserved demand before committing to a direction."
+tags: [
+  "Research",
+  "Automation",
+  "Pipeline"
+]
+---
+## When to use this template
+
+Use this when you want a repeatable system for finding underserved demand — not a one-off search, but a pipeline that runs every day and surfaces new opportunities before you commit to a direction.
+
+The pipeline works best for: content sites, SaaS tools, or any product where organic search demand is a meaningful signal. It is not useful if your market is entirely relationship-driven or if you already have a saturated keyword strategy.
+
+## How the pipeline works
+
+The pipeline runs in two parallel tracks that merge into a single ranked shortlist:
+
+```
+Seed keywords
+  → Track A: Google Trends (rising expressions)
+  → Track B: Keyword database (undervalued mature terms)
+  → Merge 1
+
+  → Community validation (HN, GitHub, Tavily)
+  → Bridge: community terms → Trends check
+  → Merge 2
+
+  → SERP competition analysis
+  → Final ranked shortlist → deliver to channel
+```
+
+Each step filters and scores. By the time results reach you, they have passed multiple independent signals.
+
+## Minimal setup
+
+**Step 1: Prepare seed keywords**
+
+Create a `seed_roots.json` file in your workspace with your core category terms. These are not target keywords — they are the roots the pipeline expands from:
+
+```json
+["ai generator", "ai detector", "ai editor", "ai writer", "ai summarizer"]
+```
+
+Start with 10–20 roots. The pipeline expands each one automatically.
+
+**Step 2: Configure the cron job**
+
+Add this to your `openclaw.json` crons section:
+
+```json
+{
+  "name": "demand-mining-daily",
+  "schedule": { "kind": "cron", "expr": "0 7 * * *", "tz": "Asia/Shanghai" },
+  "payload": {
+    "kind": "agentTurn",
+    "message": "Run the demand mining pipeline. Read seed_roots.json, expand each root using Google Trends and keyword data, validate top candidates against HN and GitHub signals, run SERP competition check on finalists, and output a ranked shortlist of 10 opportunities to the channel. Format: keyword | monthly volume | trend direction | competition level | why it matters.",
+    "model": "sonnet"
+  },
+  "sessionTarget": "isolated",
+  "delivery": { "mode": "announce" }
+}
+```
+
+**Step 3: Install required skills**
+
+```bash
+clawhub install search-web
+clawhub install web-fetch
+clawhub install summarize
+```
+
+## What good output looks like
+
+A good daily shortlist is scannable in under two minutes. Each entry answers: is this worth investigating further?
+
+```
+📊 Daily Demand Report — Apr 8
+
+1. "ai pdf summarizer" | 8,400/mo | ↑ +34% | KD: 18 | Gap: no dedicated tool ranks well
+2. "local ai assistant mac" | 3,200/mo | ↑ +61% | KD: 12 | Gap: most results are generic
+3. "ai meeting notes free" | 12,100/mo | → stable | KD: 24 | Gap: top results are paywalled
+...
+```
+
+If the output requires you to open five tabs to evaluate one entry, the pipeline is not filtering enough. Tighten the scoring thresholds.
+
+## Scoring thresholds to tune
+
+These are starting values. Adjust based on your market:
+
+| Signal | Keep if | Drop if |
+|--------|---------|---------|
+| Monthly search volume | > 1,000 | < 500 |
+| Keyword difficulty | < 30 | > 45 |
+| Trend slope | positive or stable | declining |
+| Community mentions (HN/GH) | any in last 90 days | none |
+
+## First extension
+
+Once the basic pipeline is stable, add a deduplication step: compare today's shortlist against a `seen_keywords.json` file so you only surface genuinely new opportunities. This prevents the same high-volume terms from appearing every day.

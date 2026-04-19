@@ -1,0 +1,549 @@
+---
+locale: en
+publishedAt: 2026-04-11
+updatedAt: 2026-04-11
+step: "05"
+title: "Basic Troubleshooting"
+summary: "Most first-run failures are missing verification steps, not mysterious platform bugs."
+readingTime: "14 min"
+bullets: [
+  "Check channel pairing, process status, and API credentials first.",
+  "Read logs before changing multiple variables at once.",
+  "Route back into setup or templates once the symptom is clear."
+]
+tags: []
+---
+When the first run fails, the fastest path is to narrow the symptom instead of changing multiple variables at once. For beginners, the biggest risk is usually not a deep bug. It is turning a simple problem into a complicated one.
+
+## Troubleshooting overview: which layer is the problem in
+
+Almost every Quick Start issue falls into one of these four layers:
+
+```
+[Installation]  Commands don't run, service won't start, environment incomplete
+      │
+      ▼
+[Model]  Invalid key, wrong provider config, model call fails
+      │
+      ▼
+[Channel]  Bot doesn't receive messages, permissions missing, Webhook broken
+      │
+      ▼
+[Workflow]  Trigger arrives but skill errors or output format is wrong
+```
+
+You do not need to know how to fix every layer immediately. You do need to know which layer you are in. Once you identify the layer, the problem narrows to two or three possible causes.
+
+## The troubleshooting order
+
+Use this fixed sequence:
+
+1. Confirm the visible symptom (completely silent? error message? wrong response?)
+2. Inspect the nearest log or health signal
+3. Change one variable at a time
+4. Retry immediately after each change
+5. Check whether the problem moved
+
+"Did the problem move?" is important. If you started with "no message came back" and now you have "the message came back but the content is wrong," that is progress. It means you cleared one layer and reached the next.
+
+## Layer 1: Installation issues
+
+### Symptom: `command not found: openclaw`
+
+The CLI is not installed, or the npm global bin directory is not in your PATH.
+
+```bash
+openclaw --version
+# zsh: command not found: openclaw
+```
+
+Diagnose:
+
+```bash
+npm config get prefix
+# prints something like /usr/local or /Users/yourname/.npm-global
+```
+
+Fix: make sure `<prefix>/bin` is in your PATH:
+
+```bash
+export PATH="$(npm config get prefix)/bin:$PATH"
+```
+
+Then reinstall:
+
+```bash
+npm install -g @openclaw/cli
+openclaw --version
+# openclaw/0.x.x darwin-arm64 node-v20.x.x
+```
+
+### Symptom: Node.js version too low
+
+```bash
+openclaw start
+# Error: Unsupported Node.js version. Required: >=18, found: 16.14.2
+```
+
+Fix: upgrade with nvm:
+
+```bash
+nvm install 20
+nvm use 20
+node --version
+# v20.x.x
+```
+
+### Symptom: npm install fails
+
+```bash
+npm install -g @openclaw/cli
+# npm ERR! network request failed
+# npm ERR! ECONNREFUSED
+```
+
+Possible causes:
+- No network connection
+- Blocked by firewall
+- npm registry unreachable
+
+Fix:
+
+```bash
+# check current registry
+npm config get registry
+
+# switch registry if needed
+npm config set registry https://registry.npmjs.org
+
+# retry
+npm install -g @openclaw/cli
+```
+
+### Symptom: config file not found
+
+```bash
+openclaw start
+# Error: Cannot find config file: ./openclaw.config.json
+```
+
+Fix: make sure you are running the command from the correct directory:
+
+```bash
+ls openclaw.config.json
+# if the file doesn't exist, navigate to your project directory
+cd my-openclaw
+openclaw start
+```
+
+### Symptom: JSON syntax error in config
+
+```bash
+openclaw start
+# SyntaxError: Unexpected token } in JSON at position 234
+```
+
+Fix: validate the JSON:
+
+```bash
+node -e "JSON.parse(require('fs').readFileSync('openclaw.config.json','utf8'))"
+# no output = valid JSON
+# error output = look at the position — usually a trailing comma or missing quote
+```
+
+## Layer 2: Model issues
+
+### Symptom: API key invalid
+
+```bash
+openclaw start
+# [openclaw] Authenticating with OpenAI... FAILED
+# Error: 401 Unauthorized — invalid API key
+```
+
+Diagnose:
+
+```bash
+# confirm the environment variable is loaded
+echo $OPENAI_API_KEY
+# should print your key, not an empty line
+
+# if empty, check your .env file
+cat .env
+# OPENAI_API_KEY=sk-your-key-here
+```
+
+Common causes:
+- Extra spaces or line breaks when copying the key
+- Key has been revoked or expired
+- Using an Anthropic key but provider is set to openai
+
+Fix: verify the key in your provider's dashboard:
+- OpenAI: platform.openai.com → API Keys
+- Anthropic: console.anthropic.com → API Keys
+- Gemini: aistudio.google.com → API Keys
+
+### Symptom: provider config does not match the key
+
+```bash
+openclaw start
+# [openclaw] Provider: anthropic (claude-3-haiku)
+# [openclaw] Authenticating with Anthropic... FAILED
+# Error: Invalid API key format
+```
+
+Check that the provider in `openclaw.config.json` matches your environment variable:
+
+```json
+{
+  "agent": {
+    "provider": "openai",
+    "model": "gpt-4o-mini"
+  }
+}
+```
+
+If provider is `openai`, the variable must be `OPENAI_API_KEY`. If `anthropic`, it must be `ANTHROPIC_API_KEY`.
+
+### Symptom: model call succeeds but returns empty
+
+```
+[openclaw] Model call completed (0 tokens)
+[openclaw] Warning: empty response from model
+```
+
+Possible causes:
+- System prompt file path is wrong, resulting in an empty prompt
+- Provider balance is depleted (some providers return empty instead of an error)
+
+Diagnose:
+
+```bash
+# confirm AGENTS.md exists and has content
+cat workspace/AGENTS.md
+# should print your rules
+
+# confirm the config path is correct
+node -e "const c=JSON.parse(require('fs').readFileSync('openclaw.config.json','utf8')); console.log(c.agent.systemPrompt)"
+# workspace/AGENTS.md
+```
+
+### Symptom: model call times out
+
+```
+[openclaw] Calling model: openai/gpt-4o-mini...
+[openclaw] Error: Request timeout after 30000ms
+```
+
+Possible causes:
+- Unstable network connection
+- API requires a proxy but none is configured
+- Provider service is temporarily unavailable
+
+Fix: test network connectivity to the API endpoint with curl:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" https://api.openai.com/v1/models \
+  -H "Authorization: Bearer $OPENAI_API_KEY"
+# 200 = network works, key is valid
+# 401 = key is invalid
+# 000 = network unreachable
+```
+
+## Layer 3: Channel issues
+
+### Symptom: message sent, bot completely silent
+
+Check in order:
+
+**1. Is the process running?**
+
+```bash
+openclaw status
+# Status: running (PID: 12345)  → OK
+# Status: not running            → needs to be started
+```
+
+**2. Is the Webhook registered? (Telegram)**
+
+```bash
+curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo" | node -e "
+const d=require('fs').readFileSync('/dev/stdin','utf8');
+const r=JSON.parse(d).result;
+console.log('URL:', r.url || '(empty)');
+console.log('Pending:', r.pending_update_count);
+console.log('Last error:', r.last_error_message || '(none)');
+"
+```
+
+Healthy output:
+
+```
+URL: https://abcd1234.ngrok.io/webhook/telegram
+Pending: 0
+Last error: (none)
+```
+
+Problem indicators:
+
+```
+URL: (empty)
+```
+
+→ Webhook was never registered. Run `setWebhook` again.
+
+```
+Last error: Connection refused
+```
+
+→ OpenClaw is not listening, or the ngrok tunnel has expired.
+
+**3. Is the public URL reachable?**
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" https://abcd1234.ngrok.io/webhook/telegram
+# 200 or 404 = publicly reachable (404 means wrong path but network works)
+# 000 = unreachable, ngrok may have expired
+```
+
+If ngrok has expired:
+
+```bash
+ngrok http 3000
+# get the new address, then re-register the Webhook
+curl "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
+  -d "url=https://NEW-ADDRESS.ngrok.io/webhook/telegram"
+```
+
+### Symptom: Telegram returns 401 Unauthorized
+
+```
+Error: Telegram API error 401: Unauthorized
+```
+
+Cause: bot token is wrong or has been revoked.
+
+```bash
+echo $TELEGRAM_BOT_TOKEN
+# confirm the format: digits:alphanumeric_string
+# example: 1234567890:AAFsomethingsomething_tokenstring
+```
+
+Fix: get a fresh token from BotFather and update `.env`.
+
+### Symptom: Feishu event push verification failed
+
+```
+[feishu] Verification request failed: signature mismatch
+```
+
+Cause: `encryptKey` or `verificationToken` is misconfigured.
+
+Fix: go to the Feishu Open Platform → Events & Callbacks page, copy the correct values into `.env`:
+
+```bash
+FEISHU_ENCRYPT_KEY=correct_encrypt_key
+FEISHU_VERIFICATION_TOKEN=correct_verification_token
+```
+
+### Symptom: Feishu bot added to group but not replying
+
+Check in order:
+
+1. Has the app version been published? (Feishu Open Platform → Version Management & Release)
+2. Does the permission scope include `im:message` and `im:message:receive_v1`?
+3. Remove the bot from the group and re-add it
+
+## Layer 4: Workflow issues
+
+### Symptom: bot replies to messages but skill is not invoked
+
+```bash
+openclaw start --log-level debug
+```
+
+Search the debug logs for `skill`:
+
+```
+[openclaw] Message received: "https://example.com"
+[openclaw] Router: no matching skill trigger
+[openclaw] Falling back to general agent response
+```
+
+→ The agent did not recognize this input as a skill trigger.
+
+Check:
+- Is the skill enabled in the `skills` array in `openclaw.config.json`?
+- Is the rule in `AGENTS.md` specific enough? ("When the user sends a URL" is clearer than "handle links")
+
+Healthy skill invocation log:
+
+```
+[openclaw] Message received: "https://example.com"
+[openclaw] Router: matched skill trigger → web-summary
+[openclaw] Skill invoked: web-summary
+[openclaw] Fetching URL: https://example.com
+[openclaw] Model call completed (347 tokens)
+[openclaw] Reply sent to channel
+```
+
+### Symptom: skill invoked but returns an error
+
+```
+[openclaw] Skill invoked: web-summary
+[openclaw] Skill error: web-summary — unable to fetch page content
+```
+
+Possible causes:
+- The page requires a login (web-summary only fetches public pages)
+- The page has anti-scraping protection
+- Network connectivity issue
+
+Fix: test with the simplest possible public page:
+
+```
+https://example.com
+```
+
+If example.com succeeds, the skill itself is working — the original target page is blocking the request.
+
+### Symptom: result returned but format is wrong
+
+Expected:
+
+```
+**Summary**
+[summary content]
+
+**Source**: https://example.com
+**Language**: English
+```
+
+Got an unformatted block of text instead.
+
+Cause: the format description in `AGENTS.md` is not specific enough.
+
+Fix: review the template section in `AGENTS.md`:
+1. Is the format description precise? (The agent needs explicit instructions, not vague words like "be concise")
+2. Is there a complete format example? (The agent needs to see the actual template to replicate it accurately)
+
+## Quick diagnosis table
+
+| Symptom | Check first | Common cause |
+|---------|------------|--------------|
+| `command not found: openclaw` | `npm config get prefix` | npm global bin not in PATH |
+| `401 Unauthorized` on startup | `echo $OPENAI_API_KEY` | API key invalid or not loaded |
+| Startup OK but bot is silent | `openclaw status` + `getWebhookInfo` | Process not running or Webhook not registered |
+| Bot replies but skill not invoked | Debug logs, search for `skill` | Skill not enabled or AGENTS.md rules don't match |
+| Skill invoked but returns empty/error | Debug logs, look for `Skill error` | Page not fetchable or network issue |
+| Output format is wrong | Check AGENTS.md template | Format description not precise enough |
+| JSON config parse error | `node -e "JSON.parse(...)"` | Trailing comma or missing quote |
+| Model call timeout | curl test API endpoint | Network or proxy configuration |
+
+## Logs: your most important debugging tool
+
+### Viewing live logs
+
+```bash
+# start with debug log level
+openclaw start --log-level debug
+
+# or tail the log file in a separate terminal
+tail -f workspace/logs/openclaw.log
+```
+
+### Log level reference
+
+| Level | Meaning | When to use |
+|-------|---------|-------------|
+| `error` | Hard errors requiring immediate attention | Always watch |
+| `warn` | Potential issues, not yet a crash | Check occasionally |
+| `info` | Normal operation records | Default level |
+| `debug` | Detailed trace including API request details | Enable when debugging |
+
+### Health check
+
+```bash
+openclaw status
+```
+
+Healthy output:
+
+```
+Status: running (PID: 12345)
+Uptime: 2m 34s
+Provider: openai
+Model: gpt-4o-mini
+Channels: 1 connected
+Skills: 1 loaded
+Workspace: ./workspace
+```
+
+If `Channels: 0 connected` but you have configured a channel, the channel config has a problem. If `Skills: 0 loaded` but you have added skills, check the `skills` array in `openclaw.config.json`.
+
+## Four most common beginner mistakes
+
+### 1. Changing multiple variables at once
+
+Reacting to failure by changing the prompt, model, environment, and skills all at once destroys the only useful evidence.
+
+**Correct approach**: change one variable, retry immediately.
+
+### 2. Jumping to conclusions too early
+
+- Bot is silent → must be the model (actually the Webhook was never registered)
+- Model errors once → must be a platform bug (actually the key expired)
+- One skill fails → whole system is unstable (actually the page has anti-scraping)
+
+At the Quick Start stage, most issues are just incomplete validation.
+
+### 3. Treating backend logs as success criteria
+
+Seeing `connected` in the backend output and calling it done. The only real success criterion: **you sent a message from the actual chat UI and the bot actually replied.**
+
+### 4. Expanding features before the channel loop works
+
+Adding skills, tweaking prompts, and switching models before the channel round-trip is confirmed has almost no value. Ensure messages can be sent and received first.
+
+## Troubleshooting record template
+
+For every troubleshooting attempt, write down these three things:
+
+```
+Action: [what you did]
+Symptom: [what you saw]
+Variable: [what you changed]
+```
+
+Example:
+
+```
+Action: sent "hello" to Telegram bot
+Symptom: no reply after 60 seconds
+Variable: none (first test)
+
+Action: ran openclaw status
+Symptom: Status: not running
+Variable: none
+
+Action: ran openclaw start
+Symptom: started successfully, resent hello, got a reply
+Variable: restarted the process
+```
+
+This dramatically reduces the "I tried a lot of things but cannot remember what actually changed" confusion.
+
+## When to leave Quick Start troubleshooting
+
+If you can already describe the issue in a specific sentence like one of these, stop doing generic troubleshooting:
+
+- "The process is alive, but Feishu messages are not arriving."
+- "The channel works, but provider authentication fails."
+- "Basic chat replies work, but the starter workflow fails on trigger."
+- "The same command worked yesterday, and today only one skill fails."
+
+Once the symptom is specific enough, move into the matching **Troubleshoot** path and follow the recovery guide from there. The role of Quick Start is to take you from "I have no idea" to "I know which layer is failing."
+
+## A better next move
+
+Once you can clearly describe the symptom, go to **Troubleshoot** for the matching recovery guide. If you have checked all four layers and the problem persists, go to **Learn** to deepen your understanding of OpenClaw's underlying mechanics.

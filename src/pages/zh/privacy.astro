@@ -1,11 +1,19 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getEntryBySlug } from "@/lib/content";
+
+const entry = await getEntryBySlug("pages", "zh", "privacy");
+if (!entry) {
+  throw new Error('Missing "privacy" page content for locale "zh".');
+}
+
+const { Content } = await entry.render();
 ---
 
-<BaseLayout active="none" description="AnyPlaybook 示例隐私页。" locale="zh" path="/privacy/" title="隐私 | AnyPlaybook">
-  <article class="section card page-prose">
-    <h1>隐私</h1>
-    <p>这个模板主要用于以静态内容为主的教程站。</p>
-    <p>下游站点应补充统计脚本、广告脚本、媒体嵌入、表单和外部服务等隐私说明。</p>
+<BaseLayout active="none" description={entry.data.summary} locale="zh" path="/privacy/" title={`${entry.data.title} | OpenClaw101`}>
+  <article class="section card page-prose" data-pagefind-body>
+    <h1>{entry.data.title}</h1>
+    <p class="sub">{entry.data.summary}</p>
+    <Content />
   </article>
 </BaseLayout>

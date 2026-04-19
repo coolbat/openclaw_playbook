@@ -10,19 +10,23 @@ const entries = await getLocalizedCollection("troubleshoot", locale);
 const categories = getUniqueCategories(entries);
 ---
 
-<BaseLayout active="troubleshoot" description="按症状组织的排错库模板页。" locale={locale} path="/troubleshoot/" title="Troubleshoot | AnyPlaybook">
+<BaseLayout active="troubleshoot" description="按症状组织的 OpenClaw 排错与恢复指南，覆盖安装、运行状态、凭证和工作流问题。" locale={locale} path="/troubleshoot/" title="Troubleshoot | OpenClaw101">
   <PageHero
     className="page-hero hero-single"
+    ctas={[
+      { href: "#troubleshoot-directory", label: "按症状浏览", variant: "primary" },
+      { href: localizePath("/#quick-start", locale), label: "返回 Quick Start", variant: "secondary" },
+    ]}
     highlights={[
-      `${entries.length} 篇恢复指南`,
-      "从症状组织，不靠猜测",
-      "已连好后续跳转路径",
+      `${entries.length} 个症状条目`,
+      "先从失败现象出发，而不是靠随机猜测",
+      "在改 setup、模型或工作流前先缩小可能原因",
     ]}
     kicker="TROUBLESHOOT"
-    summary="从症状出发，帮助用户快速恢复并回到正确工作流的排错栏目。"
-    title="从症状恢复，而不是靠猜。"
+    summary="把 Troubleshoot 当成诊断中心来用：先从失败现象出发，缩小可能原因，再决定是否改 setup、模型或工作流。"
+    title="按症状诊断 OpenClaw，而不是靠随机猜测。"
   />
-  <div class="filter-rail" data-filter-group="troubleshoot">
+  <div class="filter-rail" data-filter-group="troubleshoot" id="troubleshoot-directory">
     <button class="filter-button is-active" data-filter="all" type="button">全部分类</button>
     {categories.map((category) => (
       <button class="filter-button" data-filter={category} type="button">{category}</button>
@@ -31,7 +35,7 @@ const categories = getUniqueCategories(entries);
   <div class="grid cols-3">
     {entries.map((entry) => (
       <div data-filter-item={entry.data.category}>
-        <ArticleCard eyebrow={entry.data.symptom} href={localizePath(`/troubleshoot/${getRouteSlug(entry)}/`, locale)} summary={entry.data.summary} title={entry.data.title} />
+        <ArticleCard eyebrow={entry.data.symptom} href={localizePath(`/troubleshoot/${getRouteSlug(entry)}/`, locale)} locale={locale} summary={entry.data.summary} title={entry.data.title} />
       </div>
     ))}
   </div>

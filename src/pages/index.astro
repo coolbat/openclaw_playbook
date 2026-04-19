@@ -7,7 +7,7 @@ import ArticleCard from "@/components/ArticleCard.astro";
 import { adsConfig, isAdSlotEnabled } from "@/config/ads";
 import { homeConfig } from "@/config/home";
 import { defaultLocale } from "@/config/site";
-import { getLocalizedCollection, getRouteSlug } from "@/lib/content";
+import { getLocalizedCollection, getRouteSlug, sortByPublication } from "@/lib/content";
 import { localizePath } from "@/lib/i18n";
 
 const locale = defaultLocale;
@@ -15,9 +15,9 @@ const quickStart = await getLocalizedCollection("quickStart", locale);
 const learnEntries = await getLocalizedCollection("learn", locale);
 const templateEntries = await getLocalizedCollection("templates", locale);
 const troubleshootEntries = await getLocalizedCollection("troubleshoot", locale);
-const learn = learnEntries.slice(0, 3);
-const templates = templateEntries.slice(0, 3);
-const troubleshoot = troubleshootEntries.slice(0, 3);
+const learn = sortByPublication(learnEntries).slice(0, 3);
+const templates = sortByPublication(templateEntries).slice(0, 3);
+const troubleshoot = sortByPublication(troubleshootEntries).slice(0, 3);
 const homeAd = adsConfig.slots.home_between_sections.content.en;
 ---
 
@@ -26,18 +26,20 @@ const homeAd = adsConfig.slots.home_between_sections.content.en;
   description={homeConfig.hero.summary.en}
   locale={locale}
   path="/"
-  title="AnyPlaybook | Tutorial Template"
+  title="OpenClaw101 | OpenClaw Tutorials"
 >
   <PageHero
     className="hero"
     ctas={[
-      { href: "#quick-start", label: "Open 5-step Quick Start", variant: "primary" },
-      { href: localizePath("/learn/", locale), label: "Browse Learn", variant: "secondary" },
+      { href: "#quick-start", label: "Start the 5-step path", variant: "primary" },
+      { href: localizePath("/learn/", locale), label: "Build stronger foundations", variant: "secondary" },
+      { href: localizePath("/troubleshoot/", locale), label: "First run failed?", variant: "link" },
     ]}
     highlights={[
-      "Bilingual routing included",
-      "Theme + locale controls ready",
-      "Structured content collections",
+      "5 linked step guides",
+      "One guided path from mental model to first useful loop",
+      "Channel + result + recovery",
+      "Know where to go when the first run fails",
     ]}
     kicker={homeConfig.hero.kicker}
     summary={homeConfig.hero.summary.en}
@@ -49,7 +51,7 @@ const homeAd = adsConfig.slots.home_between_sections.content.en;
     <SectionHeading title={homeConfig.quickStartIntro.title.en} summary={homeConfig.quickStartIntro.summary.en} />
     <div class="grid cols-2">
       {quickStart.map((entry) => (
-        <QuickStartCard entry={entry.data} href={localizePath(`/quick-start/${getRouteSlug(entry)}/`, locale)} />
+        <QuickStartCard entry={entry.data} href={localizePath(`/quick-start/${getRouteSlug(entry)}/`, locale)} locale={locale} />
       ))}
     </div>
   </section>
@@ -66,6 +68,7 @@ const homeAd = adsConfig.slots.home_between_sections.content.en;
         <ArticleCard
           eyebrow={entry.data.category}
           href={localizePath(`/learn/${getRouteSlug(entry)}/`, locale)}
+          locale={locale}
           summary={entry.data.summary}
           title={entry.data.title}
         />
@@ -98,6 +101,7 @@ const homeAd = adsConfig.slots.home_between_sections.content.en;
         <ArticleCard
           eyebrow={`${entry.data.difficulty} · ${entry.data.time}`}
           href={localizePath(`/templates/${getRouteSlug(entry)}/`, locale)}
+          locale={locale}
           summary={entry.data.summary}
           title={entry.data.title}
         />
@@ -117,6 +121,7 @@ const homeAd = adsConfig.slots.home_between_sections.content.en;
         <ArticleCard
           eyebrow={entry.data.symptom}
           href={localizePath(`/troubleshoot/${getRouteSlug(entry)}/`, locale)}
+          locale={locale}
           summary={entry.data.summary}
           title={entry.data.title}
         />

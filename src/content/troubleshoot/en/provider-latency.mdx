@@ -1,0 +1,38 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Models & credentials"
+title: "Provider latency feels like failure"
+summary: "Requests eventually finish, but the first-run experience feels broken or random."
+symptom: "Requests eventually finish, but the first-run experience feels broken or random."
+readingTime: "3 min"
+tags: []
+checks: [
+  "Retry with a much smaller request",
+  "Measure latency from logs",
+  "Test the provider outside the full workflow"
+]
+commonCauses: [
+  "Provider under load",
+  "Timeouts set too aggressively",
+  "Large prompts sent during first validation"
+]
+ctaLabel: "Continue"
+ctaHref: "/learn/"
+---
+## What this symptom usually means
+
+The issue may be delay rather than logic. High latency, timeouts, or oversized inputs can make a working system look broken.
+
+## First recovery loop
+
+Retry with a much smaller request and measure latency from logs or provider responses. You want to know whether the system is failing or simply waiting too long.
+
+## What to verify next
+
+Review timeout settings and compare provider performance outside the full workflow. This helps you distinguish a model issue from a workflow issue.
+
+## If the issue persists
+
+Treat the first-run flow as an observability problem. Shorten the request path until you can measure what happens at each step.

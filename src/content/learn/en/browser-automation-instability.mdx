@@ -1,0 +1,31 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Advanced Troubleshooting"
+title: "When Browser Automation Feels Unstable"
+summary: "A practical way to separate flaky environment issues from broken selectors and bad task design."
+readingTime: "11 min"
+tags: [
+  "Browser automation",
+  "Flaky",
+  "Debugging"
+]
+---
+## Instability has layers
+
+Browser automation failures often look random, but they usually come from one of three places: environment instability, fragile selectors, or tasks that are too stateful.
+
+## Diagnose in that order
+
+- Is the runtime stable?
+- Is the target page changing unexpectedly?
+- Is the task waiting on UI states that are not explicit?
+
+## Reduce fragility
+
+Use smaller tasks, stronger selectors, and fewer hidden assumptions. If a workflow depends on long, stateful browser sessions, it will be harder to trust.
+
+> **A better beginner move**
+>   Prove one short browser action first. Then add the second step only after the
+> first is stable.

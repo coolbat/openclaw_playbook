@@ -1,0 +1,35 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Setup"
+title: "First-run Setup Traps to Avoid"
+summary: "A checklist of mistakes that make a fresh setup look broken when it is actually just incomplete."
+readingTime: "11 min"
+tags: [
+  "Checklist",
+  "First run",
+  "Debugging"
+]
+---
+## Most first-run failures are boring
+
+That is good news. It usually means the system is not fundamentally broken. It means something basic is still missing, mismatched, or not yet verified.
+
+## Common traps
+
+- adding optional services before core health checks pass
+- switching too many config values at once
+- assuming a silent bot means the model is broken
+- debugging prompts before confirming channel delivery
+
+## Better troubleshooting order
+
+1. process is running
+2. provider credentials are valid
+3. channel receives and returns a test message
+4. one narrow workflow completes
+
+> **Order beats intuition**
+>   A fixed diagnostic order is more useful than chasing whichever symptom looks
+> the most dramatic.

@@ -1,0 +1,149 @@
+---
+locale: en
+publishedAt: 2026-04-08
+updatedAt: 2026-04-08
+category: "Advanced Config"
+title: "Sub-Agents: Turn One Thread Into a Team"
+summary: "Learn how to dispatch parallel sub-agents, pick the right model tier for each task, write task descriptions that actually work, and respect concurrency limits."
+readingTime: "11 min"
+tags: [
+  "Sub-agents",
+  "Parallel",
+  "Model tiers"
+]
+---
+By default, OpenClaw works single-threaded: finish one thing, then start the next. For simple workflows that is fine. For anything with multiple independent steps — research several topics at once, run checks across different services, process a batch of items — single-threaded execution is the bottleneck.
+
+Sub-agents let the main agent dispatch independent tasks to separate processes that run in parallel. Each sub-agent has its own session, executes its task, and reports back. The main agent coordinates; the sub-agents do the work.
+
+## What sub-agents actually are
+
+A sub-agent is not a different AI. It is a separate OpenClaw session spawned by the main agent to handle a specific task. It has no access to the main session's conversation history — it only sees the task description the main agent gives it.
+
+This isolation is both the strength and the constraint. Sub-agents can run in parallel precisely because they are independent. But they cannot share context implicitly — everything they need to know must be in the task description.
+
+## Model tier strategy
+
+The biggest practical benefit of sub-agents is cost control. Most tasks do not need the most capable model. Routing tasks to the right tier can reduce token spend by 60–70%.
+
+A practical three-tier setup:
+
+| Tier | Model alias | When to use |
+|------|-------------|-------------|
+| High | `opus` | Complex architecture decisions, multi-file refactors, deep reasoning |
+| Mid | `sonnet` | Writing code, scripts, structured information processing (default) |
+| Low | `haiku` | Simple file operations, format conversion, search and summarization |
+
+Configure model aliases in `openclaw.json` so you can refer to tiers by name rather than full model IDs:
+
+```json
+{
+  "models": {
+    "your-provider/claude-opus-4-6": { "alias": "opus" },
+    "your-provider/claude-sonnet-4-6": { "alias": "sonnet" },
+    "your-provider/claude-haiku-4-5": { "alias": "haiku" }
+  }
+}
+```
+
+Then in `AGENTS.md`, document the strategy so the main agent applies it consistently:
+
+```markdown
+## Sub-Agent Model Strategy
+
+When dispatching sub-agents, pick the model tier by task complexity:
+
+| Tier | Alias | Use for |
+|------|-------|---------|
+| 🔴 High | opus | Complex reasoning, architecture, multi-file work |
+| 🟡 Mid | sonnet | Code writing, scripts, structured processing (default) |
+| 🟢 Low | haiku | Search, summarization, file ops, format conversion |
+
+Most daily tasks are haiku-level. Default to sonnet when unsure.
+```
+
+## Writing task descriptions that work
+
+Sub-agents start with zero context. They cannot ask clarifying questions mid-task. The quality of their output is almost entirely determined by the quality of the task description the main agent writes.
+
+A weak task description produces weak output:
+
+```
+Review the code for security issues.
+```
+
+A strong task description includes: goal, scope, constraints, and output format:
+
+```markdown
+## Task: Security review of API endpoints
+
+### Goal
+Review all .js files in /root/project/src/ for API security issues.
+
+### Focus areas
+1. SQL injection risks
+2. Unvalidated user input
+3. Hardcoded secrets or tokens
+4. API endpoints missing permission checks
+
+### Constraints
+- Read only — do not modify any files
+- Skip node_modules/ and test/ directories
+
+### Output format
+Group findings by severity (🔴 Critical / 🟡 Important / 🟢 Suggestion).
+For each finding: file path, line number, description, fix recommendation.
+
+### Destination
+Write results to /root/project/SECURITY-REVIEW.md
+```
+
+The difference is not length — it is specificity. The sub-agent needs to know exactly what to look at, what to ignore, and what format to produce.
+
+## Concurrency limits
+
+Running too many sub-agents at once triggers API rate limiting. A practical ceiling is **2 concurrent sub-agents**. At 4, you will reliably hit 429 errors.
+
+This means you need to think about task dependencies before dispatching:
+
+- **Independent tasks** (no output from A feeds into B): run in parallel, up to 2 at a time
+- **Dependent tasks** (B needs A's output): run serially — dispatch B only after A completes
+
+Document this in `AGENTS.md` so the main agent applies it:
+
+```markdown
+## Sub-Agent Rules
+
+- Maximum 2 sub-agents running at the same time
+- Check for dependencies before dispatching in parallel
+- Tasks where B needs A's output must run serially
+- Use haiku for anything that does not require reasoning
+```
+
+## A practical parallel dispatch example
+
+Suppose you want to: (1) summarize three competitor websites, and (2) check your own service health. These are independent — dispatch all four in parallel, two at a time:
+
+```
+Batch 1 (parallel):
+  - Sub-agent A (haiku): fetch and summarize competitor-1.com
+  - Sub-agent B (haiku): fetch and summarize competitor-2.com
+
+Batch 2 (parallel, after batch 1 completes):
+  - Sub-agent C (haiku): fetch and summarize competitor-3.com
+  - Sub-agent D (haiku): check service health endpoints and report status
+```
+
+The main agent collects all four results and assembles the final output. Total wall-clock time is roughly half what serial execution would take.
+
+## When not to use sub-agents
+
+Sub-agents add coordination overhead. For simple, fast tasks, the overhead is not worth it:
+
+- A single web fetch and summarize: just do it in the main session
+- A quick file read and reply: no need to dispatch
+- Anything that takes under 10 seconds: serial is fine
+
+Sub-agents pay off when tasks are genuinely independent, take meaningful time, and can run in parallel without needing each other's output.
+
+> **The main agent's job is coordination, not execution.** Once you have sub-agents working, resist the temptation to have the main agent do the heavy lifting itself. Its value is in routing, assembling results, and deciding what to do next — not in being the one that does every task.

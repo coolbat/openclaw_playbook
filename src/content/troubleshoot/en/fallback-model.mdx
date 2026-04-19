@@ -1,0 +1,38 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Models & credentials"
+title: "Fallback model hides the real issue"
+summary: "OpenClaw still returns something, but quality, latency, or behavior changed sharply."
+symptom: "OpenClaw still returns something, but quality, latency, or behavior changed sharply."
+readingTime: "4 min"
+tags: []
+checks: [
+  "Inspect the actual model name in logs",
+  "Compare outputs with a known-good baseline",
+  "Temporarily force one explicit model"
+]
+commonCauses: [
+  "Primary model unavailable",
+  "Provider policy changed",
+  "A cheaper fallback path was triggered"
+]
+ctaLabel: "Continue"
+ctaHref: "/learn/"
+---
+## What this symptom usually means
+
+The system may still be operating, but not on the model path you expect. A fallback route can make the workflow feel broken even though requests technically succeed.
+
+## First recovery loop
+
+Inspect the actual model name in logs and compare the outputs with a previously good baseline. Do not trust assumptions about which model is running.
+
+## What to verify next
+
+Check whether the primary model is unavailable, whether provider policy changed, or whether a cheaper path is being selected automatically.
+
+## If the issue persists
+
+Temporarily force one explicit model path for diagnosis. That is often the fastest way to separate routing behavior from prompt behavior.

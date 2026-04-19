@@ -1,0 +1,32 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Advanced Troubleshooting"
+title: "How to Read Logs Without Guessing"
+summary: "Use a repeatable order for reading symptoms, environment, and error messages before you change config."
+readingTime: "8 min"
+tags: [
+  "Logs",
+  "Diagnosis",
+  "Method"
+]
+---
+## Read logs in layers
+
+Logs become useful when you stop treating them like a wall of text. Start from the visible symptom, then identify the failing stage, then read the environment around that failure.
+
+## A practical order
+
+1. What was the user-visible symptom?
+2. Which workflow step likely failed?
+3. What happened immediately before the error?
+4. What changed recently?
+
+## Avoid this trap
+
+Do not rewrite config first and then read the log later. By then you may have destroyed the original evidence.
+
+> **Logs are not proof alone**
+>   Pair the log with the observed symptom. A scary message that had no user impact
+> is not always your real problem.

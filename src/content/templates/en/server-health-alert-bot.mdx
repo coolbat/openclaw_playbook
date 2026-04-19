@@ -1,0 +1,37 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Monitoring Alerts"
+title: "Server Health Alert Bot"
+summary: "Monitor service health and send alerts before small issues become outages."
+readingTime: "4 min"
+difficulty: "Intermediate"
+time: "30 min"
+risk: "Medium risk"
+channels: [
+  "Telegram",
+  "Feishu"
+]
+recommendedFor: "Developers who already finished the basics and want one practical automation with real stakes."
+tags: [
+  "Monitoring",
+  "Alerts",
+  "DevOps"
+]
+---
+## When to use this template
+
+Use this when your team needs earlier visibility into service degradation. It is especially useful when a human usually notices problems too late.
+
+## Minimal setup
+
+Start with one service, a few clear health indicators, and one alert destination. Early versions should aim for clarity, not alert coverage of every failure mode.
+
+## What good output looks like
+
+A strong alert tells the team what failed, how serious it is, and what context matters first. It should reduce triage time, not increase confusion.
+
+## First extension
+
+Add escalation or summarization rules only after the base alert quality is trustworthy. Otherwise you amplify noise at scale.

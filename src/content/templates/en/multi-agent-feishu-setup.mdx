@@ -1,0 +1,147 @@
+---
+locale: en
+publishedAt: 2026-04-08
+updatedAt: 2026-04-08
+category: "Chinese Ecosystem"
+title: "Multi-Agent Feishu Collaboration Setup"
+summary: "Configure multiple independent agents with separate workspaces and route each Feishu account to the right brain using bindings."
+readingTime: "7 min"
+difficulty: "Advanced"
+time: "40 min"
+risk: "Medium risk"
+channels: [
+  "Feishu"
+]
+recommendedFor: "Teams that want different AI personalities or model choices for different Feishu bots, all managed from one OpenClaw instance."
+tags: [
+  "Multi-agent",
+  "Feishu",
+  "Routing"
+]
+---
+## When to use this template
+
+Use this when one Feishu bot is not enough. Common scenarios:
+
+- You want a general assistant bot and a dedicated code-review bot in the same workspace
+- Different teams need different AI personalities or model choices
+- You want to run Claude for reasoning tasks and a local model for routine ones, all accessible from Feishu
+
+A single OpenClaw instance can manage all of them. The key is the three-concept architecture: Accounts, Agents, and Bindings.
+
+## Core architecture
+
+| Concept | What it is | Analogy |
+|---------|-----------|---------|
+| **Accounts** | Feishu App ID + Secret | The bot's identity card |
+| **Agents** | Independent workspace with SOUL.md and MEMORY.md | The bot's brain |
+| **Bindings** | Rules that route an account to an agent | The dispatch table |
+
+One account maps to one agent. One agent can serve multiple accounts. Bindings are the routing rules that connect them.
+
+## Minimal setup
+
+**Step 1: Create separate workspaces**
+
+Each agent needs its own directory for memory and persona isolation:
+
+```bash
+mkdir -p ~/.openclaw/workspaces/assistant_workspace
+mkdir -p ~/.openclaw/workspaces/coder_workspace
+```
+
+Give each workspace its own `SOUL.md` defining the bot's personality and role.
+
+**Step 2: Configure openclaw.json**
+
+```json
+{
+  "agents": {
+    "list": [
+      {
+        "id": "agent_assistant",
+        "workspace": "~/.openclaw/workspaces/assistant_workspace",
+        "model": "your-provider/claude-sonnet-4-6"
+      },
+      {
+        "id": "agent_coder",
+        "workspace": "~/.openclaw/workspaces/coder_workspace",
+        "model": "your-provider/claude-opus-4-6"
+      }
+    ]
+  },
+  "bindings": [
+    {
+      "agentId": "agent_assistant",
+      "match": { "channel": "feishu", "accountId": "assistant_bot" }
+    },
+    {
+      "agentId": "agent_coder",
+      "match": { "channel": "feishu", "accountId": "coder_bot" }
+    }
+  ],
+  "channels": {
+    "feishu": {
+      "enabled": true,
+      "accounts": {
+        "assistant_bot": {
+          "appId": "your-app-id-1",
+          "appSecret": "your-app-secret-1",
+          "botName": "Assistant"
+        },
+        "coder_bot": {
+          "appId": "your-app-id-2",
+          "appSecret": "your-app-secret-2",
+          "botName": "Code Expert"
+        }
+      }
+    }
+  },
+  "tools": {
+    "agentToAgent": {
+      "enabled": true,
+      "allow": ["agent_assistant", "agent_coder"]
+    }
+  }
+}
+```
+
+**Step 3: Restart and verify**
+
+```bash
+openclaw gateway restart
+```
+
+Send a direct message to each bot and confirm it responds with the correct persona.
+
+## Common pitfalls
+
+**Bot is online but does not reply in groups**
+
+The Feishu app is missing the `cardkit:card:write` permission. Go to Feishu Open Platform → App Permissions → enable `cardkit:card:write` → create a new version → submit for admin approval. Permissions only take effect after the version is published.
+
+**Bot A responds with Bot B's persona**
+
+The `bindings` entry is missing `accountId`. Without it, routing is ambiguous. Always specify both `channel` and `accountId` in the match:
+
+```json
+{ "agentId": "agent_coder", "match": { "channel": "feishu", "accountId": "coder_bot" } }
+```
+
+**Group chat requires mention to trigger**
+
+Add the group ID to the groups config with `requireMention: true`:
+
+```json
+"groups": {
+  "oc_your_group_id": { "requireMention": true }
+}
+```
+
+## What good output looks like
+
+Each bot responds with its own voice and stays in its lane. The assistant bot handles general questions and coordination. The coder bot handles technical review and implementation questions. Neither bleeds into the other's domain.
+
+## First extension
+
+Once routing is stable, enable agent-to-agent communication so the assistant bot can delegate technical tasks to the coder bot automatically. The `agentToAgent` config block in the example above already enables this — just instruct the assistant's `AGENTS.md` on when to delegate.

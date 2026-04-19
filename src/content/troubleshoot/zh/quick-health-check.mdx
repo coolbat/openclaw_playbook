@@ -1,0 +1,38 @@
+---
+locale: zh
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "观察与诊断"
+title: "先跑最短健康检查环路"
+summary: "你还不能判断问题属于 setup、运行状态，还是某个具体工作流。"
+symptom: "你还不能判断问题属于 setup、运行状态，还是某个具体工作流。"
+readingTime: "3 分钟"
+tags: []
+checks: [
+  "执行 `openclaw status`",
+  "执行 `openclaw health`",
+  "改配置前先看 `openclaw logs --tail 120`"
+]
+commonCauses: [
+  "排错从假设开始而不是从证据开始",
+  "一次改了太多变量",
+  "还没有先跑基线命令"
+]
+ctaLabel: "继续排查"
+ctaHref: "/zh/learn/"
+---
+## 这个现象通常意味着什么
+
+你现在缺的不是更深的猜测，而是更好的证据。最大的风险不是某个 bug，而是在错误层面上浪费时间。
+
+## 第一轮恢复环路
+
+在改任何配置前，先跑 status、health 和一段简短日志。这能先给你一个系统状态基线。
+
+## 接下来重点核对什么
+
+判断问题更像 setup、运行健康，还是 workflow 设计。只有先分层，后面的深入排错才有意义。
+
+## 如果问题还在
+
+把第一个明确失败信号记录下来，并把它固定成后续所有验证的起点。

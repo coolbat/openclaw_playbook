@@ -19,7 +19,7 @@ const { tag } = Astro.props;
 const sections = await getEntriesByTag("en", tag.slug);
 ---
 
-<BaseLayout active="none" description={`Entries tagged ${tag.label}.`} locale="en" path={`/tags/${tag.slug}/`} title={`${tag.label} | Tags | AnyPlaybook`}>
+<BaseLayout active="none" description={`Entries tagged ${tag.label}.`} locale="en" path={`/tags/${tag.slug}/`} title={`${tag.label} | Tags | OpenClaw101`}>
   <section class="section">
     <div class="card page-prose">
       <p class="eyebrow">TAG</p>

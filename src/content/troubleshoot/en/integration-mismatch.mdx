@@ -1,0 +1,38 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Permissions & integrations"
+title: "Integration target is wrong"
+summary: "The workflow runs, but results go to the wrong place or disappear into an unexpected target."
+symptom: "The workflow runs, but results go to the wrong place or disappear into an unexpected target."
+readingTime: "3 min"
+tags: []
+checks: [
+  "Print the current destination config",
+  "Send one narrow integration test",
+  "Compare target IDs with the live system"
+]
+commonCauses: [
+  "Wrong webhook/channel ID",
+  "Workspace mismatch",
+  "Copied settings from another environment"
+]
+ctaLabel: "Continue"
+ctaHref: "/learn/"
+---
+## What this symptom usually means
+
+Routing mistakes often look more complicated than they are. The workflow may be succeeding, but the destination is misconfigured.
+
+## First recovery loop
+
+Print the current destination config and send one narrow integration test. Confirm exactly where the result is supposed to land.
+
+## What to verify next
+
+Check workspace IDs, channel IDs, webhook targets, and copied settings from other environments. These small mismatches create large confusion.
+
+## If the issue persists
+
+Test the same destination outside the full workflow. That helps isolate routing from generation.

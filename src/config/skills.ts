@@ -1,5 +1,17 @@
 import type { Locale } from "@/config/site";
 
+export const skillsHero = {
+  kicker: "CURATED SKILLS",
+  title: {
+    en: "Skills organized by what you want to automate.",
+    zh: "按自动化目标组织的精选技能库。",
+  },
+  summary: {
+    en: "Not a full marketplace. A curated set of skills organized by task category, with risk level and starter guidance so you can pick the right one without guessing.",
+    zh: "不是全量商店，而是按任务类别精选的技能集合，附带风险等级和新手建议，让你不用猜就能选对。",
+  },
+};
+
 export type SkillItem = {
   name: string;
   summary: Record<Locale, string>;

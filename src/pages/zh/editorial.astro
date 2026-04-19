@@ -1,11 +1,19 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getEntryBySlug } from "@/lib/content";
+
+const entry = await getEntryBySlug("pages", "zh", "editorial");
+if (!entry) {
+  throw new Error('Missing "editorial" page content for locale "zh".');
+}
+
+const { Content } = await entry.render();
 ---
 
-<BaseLayout active="none" description="AnyPlaybook 示例编辑政策页。" locale="zh" path="/editorial/" title="编辑政策 | AnyPlaybook">
-  <article class="section card page-prose">
-    <h1>编辑政策</h1>
-    <p>AnyPlaybook 假设教程站应优先优化清晰表达、可验证步骤和稳定的信息结构。</p>
-    <p>当 setup 实质变化、旧文开始误导用户，或出现更好的标准工作流时，应更新文章。</p>
+<BaseLayout active="none" description={entry.data.summary} locale="zh" path="/editorial/" title={`${entry.data.title} | OpenClaw101`}>
+  <article class="section card page-prose" data-pagefind-body>
+    <h1>{entry.data.title}</h1>
+    <p class="sub">{entry.data.summary}</p>
+    <Content />
   </article>
 </BaseLayout>

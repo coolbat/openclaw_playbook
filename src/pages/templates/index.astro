@@ -10,19 +10,23 @@ const entries = await getLocalizedCollection("templates", locale);
 const categories = getUniqueCategories(entries);
 ---
 
-<BaseLayout active="templates" description="Template library for tutorial sites." locale={locale} path="/templates/" title="Templates | AnyPlaybook">
+<BaseLayout active="templates" description="Starter workflow templates for OpenClaw briefings, research, collaboration, monitoring, and content production." locale={locale} path="/templates/" title="Templates | OpenClaw101">
   <PageHero
     className="page-hero hero-single"
+    ctas={[
+      { href: "#templates-directory", label: "Browse by work goal", variant: "primary" },
+      { href: localizePath("/#quick-start", locale), label: "Review Quick Start first", variant: "secondary" },
+    ]}
     highlights={[
-      `${entries.length} reusable examples`,
-      "Difficulty + time metadata",
-      "Bilingual detail pages included",
+      `${entries.length} starter templates`,
+      "Difficulty, time, risk, and channel guidance",
+      "Briefings, content production, collaboration, research, and monitoring",
     ]}
     kicker="TEMPLATE LIBRARY"
-    summary="Workflow recipes grouped by practical goal, with difficulty, time, and risk cues."
-    title="Start from a reusable workflow."
+    summary="Use Templates as a directory of practical starting points: briefings, content production, collaboration, research, monitoring, and Chinese ecosystem workflows."
+    title="Templates organized by the work you want done."
   />
-  <div class="filter-rail" data-filter-group="templates">
+  <div class="filter-rail" data-filter-group="templates" id="templates-directory">
     <button class="filter-button is-active" data-filter="all" type="button">All categories</button>
     {categories.map((category) => (
       <button class="filter-button" data-filter={category} type="button">{category}</button>
@@ -31,7 +35,7 @@ const categories = getUniqueCategories(entries);
   <div class="grid cols-3">
     {entries.map((entry) => (
       <div data-filter-item={entry.data.category}>
-        <ArticleCard eyebrow={`${entry.data.difficulty} · ${entry.data.time}`} href={localizePath(`/templates/${getRouteSlug(entry)}/`, locale)} summary={entry.data.summary} title={entry.data.title} />
+        <ArticleCard eyebrow={`${entry.data.difficulty} · ${entry.data.time}`} href={localizePath(`/templates/${getRouteSlug(entry)}/`, locale)} locale={locale} summary={entry.data.summary} title={entry.data.title} />
       </div>
     ))}
   </div>

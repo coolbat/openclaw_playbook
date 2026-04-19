@@ -2,21 +2,29 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import PageHero from "@/components/PageHero.astro";
 import SkillsPanel from "@/components/SkillsPanel.astro";
+import { skillsHero } from "@/config/skills";
+import { localizePath } from "@/lib/i18n";
 
 const locale = "en";
 ---
 
-<BaseLayout active="skills" description="Curated resources directory for tutorial sites." locale={locale} path="/skills/" title="Resources | AnyPlaybook">
+<BaseLayout active="skills" description="A curated set of OpenClaw skills organized by task category, with risk level and starter guidance." locale={locale} path="/skills/" title="Skills | OpenClaw101">
   <PageHero
     className="page-hero hero-single"
-    highlights={[
-      "Grouped by real tasks",
-      "Swap in tools or resources",
-      "Bilingual directory pattern",
+    ctas={[
+      { href: "#skills-directory", label: "Browse by task category", variant: "primary" },
+      { href: localizePath("/learn/choose-safer-starter-skills/", locale), label: "Read safety guide first", variant: "secondary" },
     ]}
-    kicker="CURATED RESOURCES"
-    summary="An example directory pattern for tools, resources, references, or recommended stacks that tutorial sites may want to group by task."
-    title="A reusable resources directory."
+    highlights={[
+      "Research, content, productivity, DevOps, communications, and Chinese ecosystem",
+      "Risk level and starter guidance included",
+      "Curated rather than marketplace-style",
+    ]}
+    kicker={skillsHero.kicker}
+    summary={skillsHero.summary.en}
+    title={skillsHero.title.en}
   />
-  <SkillsPanel locale={locale} />
+  <div id="skills-directory">
+    <SkillsPanel locale={locale} />
+  </div>
 </BaseLayout>

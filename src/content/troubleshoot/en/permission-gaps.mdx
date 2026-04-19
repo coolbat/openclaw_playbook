@@ -1,0 +1,38 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Permissions & integrations"
+title: "Permissions are incomplete"
+summary: "Parts of the workflow execute, but key actions fail at the boundary with another tool."
+symptom: "Parts of the workflow execute, but key actions fail at the boundary with another tool."
+readingTime: "4 min"
+tags: []
+checks: [
+  "List the exact action that failed",
+  "Compare required scopes with granted scopes",
+  "Test the integration with the smallest write action"
+]
+commonCauses: [
+  "Read permission exists but write permission is missing",
+  "Integration token has narrow scope",
+  "Bot not invited into the target workspace"
+]
+ctaLabel: "Continue"
+ctaHref: "/learn/"
+---
+## What this symptom usually means
+
+This usually indicates a permissions boundary problem rather than an OpenClaw reasoning problem. Read access may exist while write access is missing.
+
+## First recovery loop
+
+Identify the exact action that failed and test the smallest possible version of that write or integration step.
+
+## What to verify next
+
+Compare granted scopes with required scopes and confirm the bot is actually invited into the destination workspace or channel.
+
+## If the issue persists
+
+Replace the integration with a simpler target temporarily. That tells you whether the workflow is blocked by permissions or by a broader logic issue.

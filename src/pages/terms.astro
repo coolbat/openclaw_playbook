@@ -1,11 +1,19 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getEntryBySlug } from "@/lib/content";
+
+const entry = await getEntryBySlug("pages", "en", "terms");
+if (!entry) {
+  throw new Error('Missing "terms" page content for locale "en".');
+}
+
+const { Content } = await entry.render();
 ---
 
-<BaseLayout active="none" description="Example terms page for AnyPlaybook." locale="en" path="/terms/" title="Terms | AnyPlaybook">
-  <article class="section card page-prose">
-    <h1>Terms</h1>
-    <p>AnyPlaybook is intended for educational publishing and product tutorial sites.</p>
-    <p>Forked sites should add their own acceptable use, no-warranty, and third-party service boundaries.</p>
+<BaseLayout active="none" description={entry.data.summary} locale="en" path="/terms/" title={`${entry.data.title} | OpenClaw101`}>
+  <article class="section card page-prose" data-pagefind-body>
+    <h1>{entry.data.title}</h1>
+    <p class="sub">{entry.data.summary}</p>
+    <Content />
   </article>
 </BaseLayout>

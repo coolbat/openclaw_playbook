@@ -1,0 +1,38 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Workflow produces nothing"
+title: "Workflow is too broad to debug"
+summary: "You know something in the chain is wrong, but there are too many moving parts to isolate it."
+symptom: "You know something in the chain is wrong, but there are too many moving parts to isolate it."
+readingTime: "4 min"
+tags: []
+checks: [
+  "Split the workflow into smaller checkpoints",
+  "Inspect the first missing output",
+  "Compare against a known starter template"
+]
+commonCauses: [
+  "Too many steps in one test",
+  "No intermediate outputs captured",
+  "Channel and model issues mixed with workflow logic"
+]
+ctaLabel: "Continue"
+ctaHref: "/learn/"
+---
+## What this symptom usually means
+
+The workflow has too many steps to debug as one unit. Broad flows hide the first real breakage and make every symptom look ambiguous.
+
+## First recovery loop
+
+Split the workflow into smaller checkpoints and inspect the first missing or degraded output. The goal is to reduce the problem to one failing step.
+
+## What to verify next
+
+Check whether the missing output is due to channel handling, model behavior, or the workflow structure itself. Those are different failure classes.
+
+## If the issue persists
+
+Compare the failing flow against a proven starter template. That gives you a stable baseline and reduces the number of unknowns.

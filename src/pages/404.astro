@@ -1,0 +1,27 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { localizePath } from "@/lib/i18n";
+
+const locale = "en";
+---
+
+<BaseLayout
+  active="none"
+  description="The page you are looking for does not exist."
+  locale={locale}
+  path="/404/"
+  robots="noindex,nofollow"
+  title="Page not found | OpenClaw101"
+>
+  <section class="section hero hero-single">
+    <article>
+      <span class="kicker">404</span>
+      <h1>Page not found</h1>
+      <p class="sub">The page you are looking for doesn't exist or has been moved.</p>
+      <div class="cta-row">
+        <a class="btn primary" href={localizePath("/", locale)}>Back to homepage</a>
+        <a class="btn secondary" href={localizePath("/search/", locale)}>Search docs</a>
+      </div>
+    </article>
+  </section>
+</BaseLayout>

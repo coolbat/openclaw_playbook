@@ -1,0 +1,35 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Setup"
+title: "Verify One Model Provider Early"
+summary: "Before troubleshooting five things at once, verify one provider, one key, and one healthy response path."
+readingTime: "6 min"
+tags: [
+  "API",
+  "Health check",
+  "Credentials"
+]
+---
+## Reduce the surface area
+
+When first-run setup fails, beginners often check channels, prompts, automation logic, and model config all at once. That makes the problem harder, not easier. Start by proving one provider works in isolation.
+
+## The minimal proof
+
+You want a path that answers:
+
+- Is the API key valid?
+- Is the base URL correct?
+- Can the model return one sane response?
+
+If those three are true, you have already removed a large class of uncertainty.
+
+## Why this comes early
+
+Many later failures look like workflow or channel problems but are actually upstream model access failures. A clean provider check early saves time later.
+
+> **One-provider rule**
+>   Do not connect multiple providers until the first one is verified. Extra
+> options add noise before they add resilience.

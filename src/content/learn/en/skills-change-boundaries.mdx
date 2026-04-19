@@ -1,0 +1,37 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Foundations"
+title: "Why Skills Change Capability Boundaries"
+summary: "See how skills turn a chat surface into something that can browse, debug, transform, and deliver."
+readingTime: "10 min"
+tags: [
+  "Skills",
+  "Capability",
+  "System design"
+]
+---
+## Skills are the real multiplier
+
+Without skills, a model mostly talks. With skills, the system can fetch files, search the web, inspect code, transform content, or interact with tools. That is why skills do not feel like optional extras. They are what turn a conversation surface into a workflow surface.
+
+## Why this matters for beginners
+
+New users often judge the system too early by asking it to do work that depends on tools it has not been given yet. The result looks like model weakness, but the real issue is missing capability.
+
+- A browsing task needs browsing capability.
+- A debugging task needs shell or code access.
+- A content pipeline needs input and output tools.
+
+## Practical rule
+
+Before blaming the model, ask:
+
+1. Does the system have the right skill for this task?
+2. Does that skill have the permissions it needs?
+3. Can the result be inspected outside the chat?
+
+> **Boundary check**
+>   Skills do not make the system magically correct. They make the system able to
+> act. You still need narrow scope, observability, and review.

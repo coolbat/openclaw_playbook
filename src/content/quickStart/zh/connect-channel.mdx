@@ -1,0 +1,401 @@
+---
+locale: zh
+publishedAt: 2026-04-11
+updatedAt: 2026-04-11
+step: "03"
+title: "连接聊天渠道"
+summary: "真正的第一个里程碑，是跑通消息闭环，而不是只看见安装完成。"
+readingTime: "14 分钟"
+bullets: [
+  "先选一个简单渠道，比如 Telegram 或飞书。",
+  "发送一次测试消息，确认机器人有响应。",
+  "如果机器人沉默，先把渠道问题查清，再装技能。"
+]
+tags: []
+---
+安装只证明系统能启动。接通渠道，才证明系统能**接收、路由并回答**。这一步非常关键，因为它第一次把"后台里的 OpenClaw"变成"你真实能用的 OpenClaw"。
+
+## 什么算成功
+
+你通过一个真实渠道发出测试消息，并得到一次真实响应。
+
+这件事虽然简单，但能同时确认很多关键点：
+
+- 机器人可以被触达
+- 渠道绑定是通的
+- 消息路径是成立的
+- 模型调用在真实场景下不会失败
+- 结果可以送回到渠道
+
+如果你发出去一条消息、收到回来一条消息，你就已经完成了 Quick Start 里最重要的里程碑之一。
+
+## 第一个渠道：推荐先选 Telegram
+
+Telegram 是入门首选，原因很简单：
+
+- 申请 bot token 不需要企业账号或审核
+- Webhook 设置步骤少、文档全
+- 消息收发延迟低，调试反馈快
+- 不需要内网穿透（只需公网可达）
+
+如果你的工作场景以飞书为主，也可以直接跳到飞书部分。不过建议先把 Telegram 跑通，建立基准后再接飞书。
+
+## Telegram 渠道配置（完整步骤）
+
+### 第一步：创建 Telegram bot
+
+在 Telegram 里找到 [@BotFather](https://t.me/BotFather)，发送：
+
+```
+/start
+/newbot
+```
+
+BotFather 会问你机器人的名称和用户名（用户名必须以 `bot` 结尾）：
+
+```
+Name: My OpenClaw Bot
+Username: my_openclaw_bot
+```
+
+创建成功后，BotFather 会回复你 bot token，格式类似：
+
+```
+Done! Use this token to access the HTTP API:
+1234567890:AAFsomethingsomething_tokenstring
+```
+
+复制这个 token，后面会用到。
+
+### 第二步：把 token 写入配置
+
+打开你的 `openclaw.config.json`，在 `channels` 数组里加入 Telegram 配置：
+
+```json
+{
+  "version": "1",
+  "agent": {
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "systemPrompt": "workspace/AGENTS.md"
+  },
+  "workspace": {
+    "root": "./workspace"
+  },
+  "channels": [
+    {
+      "type": "telegram",
+      "token": "${TELEGRAM_BOT_TOKEN}",
+      "mode": "webhook",
+      "webhookPath": "/webhook/telegram"
+    }
+  ],
+  "skills": []
+}
+```
+
+> 不要把 token 直接写在配置文件里。用环境变量引用，把实际值放到 `.env`。
+
+在 `.env` 文件中加入：
+
+```bash
+TELEGRAM_BOT_TOKEN=1234567890:AAFsomethingsomething_tokenstring
+```
+
+### 第三步：注册 Webhook URL
+
+Telegram 需要一个公网可访问的 HTTPS URL 来推送消息事件。本地开发推荐用 [ngrok](https://ngrok.com/) 创建临时隧道：
+
+```bash
+# 安装 ngrok（mac）
+brew install ngrok/ngrok/ngrok
+
+# 把本地 3000 端口暴露到公网
+ngrok http 3000
+```
+
+ngrok 会输出一个公网地址，例如：
+
+```
+Forwarding  https://abcd1234.ngrok.io -> http://localhost:3000
+```
+
+复制这个地址，然后向 Telegram 注册 Webhook：
+
+```bash
+curl "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
+  -d "url=https://abcd1234.ngrok.io/webhook/telegram"
+```
+
+成功响应：
+
+```json
+{"ok":true,"result":true,"description":"Webhook was set"}
+```
+
+### 第四步：启动 OpenClaw 并测试
+
+```bash
+openclaw start
+```
+
+健康启动日志现在应该显示渠道已连接：
+
+```
+[openclaw] Starting OpenClaw v0.x.x
+[openclaw] Loading config: ./openclaw.config.json
+[openclaw] Provider: openai (gpt-4o-mini)
+[openclaw] Authenticating with OpenAI... OK
+[openclaw] Channel: telegram — webhook registered at /webhook/telegram
+[openclaw] Ready.
+```
+
+去 Telegram 找到你的机器人，发送：
+
+```
+hello
+```
+
+预期回复：
+
+```
+Hello! How can I help you today?
+```
+
+如果看到回复，Telegram 渠道已经接通。
+
+## 飞书渠道配置（完整步骤）
+
+飞书的接入步骤比 Telegram 多一些，主要是因为需要在飞书开放平台创建企业自建应用。
+
+### 第一步：创建飞书自建应用
+
+访问飞书开放平台：[open.feishu.cn](https://open.feishu.cn)
+
+1. 登录后点击"开发者后台"
+2. 点击"创建企业自建应用"
+3. 填写应用名称（例如 `OpenClaw Bot`）和描述
+4. 创建完成后，进入"凭证与基础信息"，记录 `App ID` 和 `App Secret`
+
+### 第二步：配置机器人权限
+
+在应用详情页：
+
+1. 进入"添加应用能力" → 选择"机器人"
+2. 进入"权限管理"，开启以下权限：
+   - `im:message:receive_v1`（接收消息）
+   - `im:message`（发送消息）
+
+3. 发布应用版本（审核通过后权限才会生效）
+
+### 第三步：填写 OpenClaw 配置
+
+```json
+{
+  "channels": [
+    {
+      "type": "feishu",
+      "appId": "${FEISHU_APP_ID}",
+      "appSecret": "${FEISHU_APP_SECRET}",
+      "encryptKey": "${FEISHU_ENCRYPT_KEY}",
+      "verificationToken": "${FEISHU_VERIFICATION_TOKEN}",
+      "webhookPath": "/webhook/feishu"
+    }
+  ]
+}
+```
+
+在 `.env` 中加入：
+
+```bash
+FEISHU_APP_ID=cli_xxxxxxxxxxxxxxxx
+FEISHU_APP_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+FEISHU_ENCRYPT_KEY=your_encrypt_key_here
+FEISHU_VERIFICATION_TOKEN=your_verification_token_here
+```
+
+`encryptKey` 和 `verificationToken` 在飞书开放平台的"事件与回调"页面可以配置和获取。
+
+### 第四步：配置事件订阅
+
+在"事件与回调"页面：
+
+1. 填写 Request URL：`https://your-domain.com/webhook/feishu`
+2. 勾选事件类型：`im.message.receive_v1`（接收消息）
+3. 保存配置
+
+飞书会发送一次验证请求，OpenClaw 自动处理响应。
+
+### 第五步：把机器人加入群聊或会话
+
+在飞书里找到你的应用，添加到目标群组或与机器人开启单聊。发送测试消息：
+
+```
+hello
+```
+
+如果机器人回复，飞书渠道接通。
+
+## 一条测试消息，到底在验证什么
+
+这一步不只是验证"机器人会回话"，它其实在验证一整段链路：
+
+```
+[你发送消息]
+      │
+      ▼
+[渠道平台（Telegram/飞书）接收]
+      │ 推送事件到 Webhook URL
+      ▼
+[OpenClaw 接收事件]
+      │
+      ▼
+[消息路由器 → 代理执行引擎]
+      │
+      ▼
+[调用模型（OpenAI/Anthropic/Gemini）]
+      │
+      ▼
+[模型返回结果]
+      │ OpenClaw 回发到渠道
+      ▼
+[你在聊天界面看到回复]
+```
+
+任何一个环节断开，你就会看到机器人沉默。所以这一步越早做越好，它能迅速排除大量不确定性。
+
+## 如果机器人没反应：按层检查
+
+### 检查 OpenClaw 进程
+
+```bash
+openclaw status
+```
+
+如果进程没有运行：
+
+```bash
+openclaw start --log-level debug
+```
+
+### 检查 Webhook 是否注册成功
+
+```bash
+# Telegram
+curl "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo"
+```
+
+正常响应：
+
+```json
+{
+  "ok": true,
+  "result": {
+    "url": "https://abcd1234.ngrok.io/webhook/telegram",
+    "has_custom_certificate": false,
+    "pending_update_count": 0,
+    "last_error_date": 0
+  }
+}
+```
+
+如果 `url` 字段为空，说明 Webhook 没有注册成功，重新执行 `setWebhook`。
+
+如果 `last_error_message` 字段有内容，说明 Telegram 推送事件但 OpenClaw 返回了错误：
+
+```json
+{
+  "last_error_message": "Connection refused"
+}
+```
+
+这通常意味着 OpenClaw 进程没有在监听，或者 ngrok 隧道已断开。
+
+### 检查公网可达性
+
+```bash
+curl https://abcd1234.ngrok.io/webhook/telegram
+```
+
+如果返回 404 或连接超时，ngrok 隧道已失效。重新运行 `ngrok http 3000` 并更新 Webhook URL。
+
+### 缩小问题范围
+
+把问题缩成两类之一：
+
+| 现象 | 大概率原因 |
+|------|----------|
+| 发出消息，机器人完全无反应 | Webhook 未注册 / 进程未运行 / 公网不可达 |
+| 机器人有响应，但报错 | Token 无效 / 模型调用失败 / 权限不足 |
+
+确定属于哪一类后，再针对性检查。
+
+## 常见错误及修复
+
+### Telegram: 401 Unauthorized
+
+```
+Error: Telegram API error 401: Unauthorized
+```
+
+原因：bot token 填写错误，或已被撤销。
+
+修复：重新从 BotFather 获取 token，确认无多余空格。
+
+```bash
+echo $TELEGRAM_BOT_TOKEN
+# 确认输出的 token 格式正确
+```
+
+### Telegram: Webhook URL 不可达
+
+```
+Error: Failed to set webhook: Bad Request: wrong url host
+```
+
+原因：Webhook URL 不是合法的 HTTPS 地址，或 ngrok 已过期。
+
+修复：确认 ngrok 正在运行，地址以 `https://` 开头。
+
+### 飞书: 事件推送验证失败
+
+```
+[feishu] Verification request failed: signature mismatch
+```
+
+原因：`encryptKey` 或 `verificationToken` 配置不正确。
+
+修复：重新在飞书开放平台"事件与回调"页面获取正确的值，更新 `.env`。
+
+### 机器人加入群聊但不回复
+
+原因：机器人没有获得群聊的消息读取和发送权限，或者飞书应用权限未发布。
+
+修复：
+
+1. 确认应用已发布版本（"版本管理与发布"页面）
+2. 确认权限范围包含 `im:message`
+3. 重新把机器人移出再加入群聊
+
+## 新手最常见的误区
+
+当机器人没反应时，很多人第一反应是继续加技能、改 prompt，甚至换模型。通常这只会把问题越改越糊。
+
+渠道闭环没通之前，功能扩展几乎没有意义。
+
+另一个常见误区，是把"能在后台看到 connected"误当作真正成功。真正成功的标准只有一个：**你在真实聊天界面发出消息，机器人真的回了。**
+
+## 这一步完成后，你应该确认什么
+
+继续往下之前，最好确认下面几件事：
+
+- 你已经选定了一个主渠道
+- 你已经完成了一次真实消息往返
+- 你知道渠道失败时该先查哪一层（进程 → Webhook → 权限 → 日志）
+- 你还没有被多渠道、多群、多账号的复杂度拖住
+
+做到这里，OpenClaw 才算从"装在电脑里"变成"开始能被调用"。
+
+## 更好的下一步
+
+渠道已经通了，就进入**第一个入门工作流**。如果渠道没通，先把它当成渠道问题，而不是 workflow 问题。不要还没收发成功，就提前优化工作流设计。

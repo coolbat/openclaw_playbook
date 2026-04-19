@@ -1,0 +1,38 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Workflow produces nothing"
+title: "Workflow runs but output is weak"
+summary: "The task technically completes, but the output is too noisy, shallow, or hard to use."
+symptom: "The task technically completes, but the output is too noisy, shallow, or hard to use."
+readingTime: "4 min"
+tags: []
+checks: [
+  "Rewrite the expected artifact in one sentence",
+  "Compare output against a real human baseline",
+  "Reduce the workflow to one clearer deliverable"
+]
+commonCauses: [
+  "Prompt or framing too generic",
+  "Success criteria never defined",
+  "Trying to automate before choosing the right artifact"
+]
+ctaLabel: "Continue"
+ctaHref: "/learn/"
+---
+## What this symptom usually means
+
+This is often a workflow design problem, not a runtime problem. The system may be healthy while the framing of the task is still too vague.
+
+## First recovery loop
+
+Restate the expected artifact in one sentence. If you cannot describe the output clearly, the workflow probably cannot produce it clearly either.
+
+## What to verify next
+
+Compare the result with a real human baseline and reduce the workflow to a narrower deliverable. You want one useful output before you want a sophisticated system.
+
+## If the issue persists
+
+Revisit the workflow design assumptions. Good automation usually starts with one crisp artifact, not with a fully abstract prompt.

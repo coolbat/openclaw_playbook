@@ -1,11 +1,19 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getEntryBySlug } from "@/lib/content";
+
+const entry = await getEntryBySlug("pages", "en", "privacy");
+if (!entry) {
+  throw new Error('Missing "privacy" page content for locale "en".');
+}
+
+const { Content } = await entry.render();
 ---
 
-<BaseLayout active="none" description="Example privacy page for AnyPlaybook." locale="en" path="/privacy/" title="Privacy | AnyPlaybook">
-  <article class="section card page-prose">
-    <h1>Privacy</h1>
-    <p>This template is designed for mostly static tutorial sites.</p>
-    <p>Downstream sites should document analytics, ad scripts, embeds, forms, and any external services they add.</p>
+<BaseLayout active="none" description={entry.data.summary} locale="en" path="/privacy/" title={`${entry.data.title} | OpenClaw101`}>
+  <article class="section card page-prose" data-pagefind-body>
+    <h1>{entry.data.title}</h1>
+    <p class="sub">{entry.data.summary}</p>
+    <Content />
   </article>
 </BaseLayout>

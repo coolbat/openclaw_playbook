@@ -10,19 +10,23 @@ const entries = await getLocalizedCollection("troubleshoot", locale);
 const categories = getUniqueCategories(entries);
 ---
 
-<BaseLayout active="troubleshoot" description="Troubleshooting hub for static tutorial sites." locale={locale} path="/troubleshoot/" title="Troubleshoot | AnyPlaybook">
+<BaseLayout active="troubleshoot" description="Symptom-first OpenClaw recovery guides for setup issues, runtime health, credentials, and workflow failures." locale={locale} path="/troubleshoot/" title="Troubleshoot | OpenClaw101">
   <PageHero
     className="page-hero hero-single"
+    ctas={[
+      { href: "#troubleshoot-directory", label: "Browse symptom groups", variant: "primary" },
+      { href: localizePath("/#quick-start", locale), label: "Back to Quick Start", variant: "secondary" },
+    ]}
     highlights={[
-      `${entries.length} recovery guides`,
-      "Symptom-first information scent",
-      "Next-step links already wired",
+      `${entries.length} symptom-first entries`,
+      "Start from what failed instead of making random guesses",
+      "Narrow causes before changing setup, models, or workflows",
     ]}
     kicker="TROUBLESHOOT"
-    summary="Symptom-first guides that help users recover quickly and route back into the right workflow."
-    title="Recover from symptoms, not guesses."
+    summary="Use Troubleshoot as a diagnostic hub: start from what failed, narrow the likely causes, and only then change setup, models, or workflows."
+    title="Diagnose OpenClaw by symptom, not by random guesses."
   />
-  <div class="filter-rail" data-filter-group="troubleshoot">
+  <div class="filter-rail" data-filter-group="troubleshoot" id="troubleshoot-directory">
     <button class="filter-button is-active" data-filter="all" type="button">All categories</button>
     {categories.map((category) => (
       <button class="filter-button" data-filter={category} type="button">{category}</button>
@@ -31,7 +35,7 @@ const categories = getUniqueCategories(entries);
   <div class="grid cols-3">
     {entries.map((entry) => (
       <div data-filter-item={entry.data.category}>
-        <ArticleCard eyebrow={entry.data.symptom} href={localizePath(`/troubleshoot/${getRouteSlug(entry)}/`, locale)} summary={entry.data.summary} title={entry.data.title} />
+        <ArticleCard eyebrow={entry.data.symptom} href={localizePath(`/troubleshoot/${getRouteSlug(entry)}/`, locale)} locale={locale} summary={entry.data.summary} title={entry.data.title} />
       </div>
     ))}
   </div>

@@ -1,0 +1,38 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Bot not responding"
+title: "Bot process is unhealthy"
+summary: "The bot appears configured, but responses are inconsistent or stop completely after startup."
+symptom: "The bot appears configured, but responses are inconsistent or stop completely after startup."
+readingTime: "4 min"
+tags: []
+checks: [
+  "Run `openclaw status`",
+  "Read the latest logs tail",
+  "Confirm health checks stay green for a few minutes"
+]
+commonCauses: [
+  "Daemon crashed after boot",
+  "Background service restarted in a loop",
+  "Runtime dependency missing after install"
+]
+ctaLabel: "Continue"
+ctaHref: "/learn/"
+---
+## What this symptom usually means
+
+This points to runtime health before it points to workflow design. OpenClaw may be installed, but the background process is unstable enough that responses never complete reliably.
+
+## First recovery loop
+
+Run the shortest health check path: status, health, and a small logs tail. The goal is to see whether the process stays alive long enough to complete one test cycle.
+
+## What to verify next
+
+Look for repeated restarts, missing dependencies, or errors that appear immediately after boot. If the process cannot stay healthy for a few minutes, workflow-level changes are premature.
+
+## If the issue persists
+
+Reproduce the same runtime in the smallest clean environment you can manage. That separates a system health issue from local tooling drift.

@@ -1,0 +1,38 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Monitoring Alerts"
+title: "Uptime Status Roundup"
+summary: "Turn monitoring signals into a readable status summary for humans who need the system view, not raw metrics."
+readingTime: "3 min"
+difficulty: "Beginner"
+time: "16 min"
+risk: "Low risk"
+channels: [
+  "Email",
+  "Feishu",
+  "Discord"
+]
+recommendedFor: "Infra teams that want less manual stitching when sharing system state internally."
+tags: [
+  "Status",
+  "Reporting",
+  "Infra"
+]
+---
+## When to use this template
+
+Use this when people need a regular service status view but do not want to open dashboards for a quick answer. It is a translation layer from metrics to status.
+
+## Minimal setup
+
+Pick one monitoring source and one reporting interval. The first pass should summarize health rather than explain every metric in detail.
+
+## What good output looks like
+
+The summary should show what stayed healthy, what degraded, and whether any action is needed. It should be readable by people outside the immediate ops team.
+
+## First extension
+
+Add a simple trend comparison with the previous period to make the roundup more decision-friendly.

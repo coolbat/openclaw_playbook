@@ -1,0 +1,548 @@
+---
+locale: zh
+publishedAt: 2026-04-11
+updatedAt: 2026-04-11
+step: "05"
+title: "基础排错"
+summary: "多数首次失败，本质上是验证链路没补齐，而不是神秘 bug。"
+readingTime: "14 分钟"
+bullets: [
+  "先查渠道配对、进程状态和 API 凭证。",
+  "先看日志，不要一次改一堆变量。",
+  "确认症状后，再回到 setup 或模板路径继续推进。"
+]
+tags: []
+---
+第一次运行失败时，最快的路径不是乱改配置，而是先把症状缩小。对新手来说，最危险的不是某个真正难解的 bug，而是把原本简单的问题改复杂了。
+
+## 排错全貌：问题落在哪一层
+
+Quick Start 阶段几乎所有问题，都能归到这四层之一：
+
+```
+[安装层]  命令跑不起来、服务没启动、环境不完整
+      │
+      ▼
+[模型层]  key 无效、provider 配错、模型调用失败
+      │
+      ▼
+[渠道层]  机器人收不到消息、权限不足、Webhook 断了
+      │
+      ▼
+[工作流层]  触发进来了，但技能报错或输出格式不对
+```
+
+你不需要一开始就知道怎么修所有问题，但至少要先知道问题大概落在哪一层。一旦确定了层，可能原因就只剩下两三个。
+
+## 排错的固定顺序
+
+用这个固定顺序：
+
+1. 确认你看到的现象（完全沉默？报错信息？回了但内容不对？）
+2. 看离现象最近的日志或健康信号
+3. 一次只改一个变量
+4. 改完立刻重试一次
+5. 判断问题有没有移动
+
+"问题有没有移动"很重要。如果你原来是"消息没回来"，改完后变成"消息回来了但内容报错"，这其实是进展——你穿过了上一层。
+
+## 安装层：常见问题与修复
+
+### 症状：`command not found: openclaw`
+
+CLI 没安装，或者 npm 全局 bin 目录不在 PATH 里。
+
+```bash
+openclaw --version
+# zsh: command not found: openclaw
+```
+
+排查：
+
+```bash
+npm config get prefix
+# 输出类似 /usr/local 或 /Users/yourname/.npm-global
+```
+
+修复：确认 `<prefix>/bin` 在你的 PATH 里：
+
+```bash
+export PATH="$(npm config get prefix)/bin:$PATH"
+```
+
+然后重新安装：
+
+```bash
+npm install -g @openclaw/cli
+openclaw --version
+# openclaw/0.x.x darwin-arm64 node-v20.x.x
+```
+
+### 症状：Node.js 版本太低
+
+```bash
+openclaw start
+# Error: Unsupported Node.js version. Required: >=18, found: 16.14.2
+```
+
+修复：用 nvm 升级：
+
+```bash
+nvm install 20
+nvm use 20
+node --version
+# v20.x.x
+```
+
+### 症状：npm install 失败
+
+```bash
+npm install -g @openclaw/cli
+# npm ERR! network request failed
+# npm ERR! ECONNREFUSED
+```
+
+可能原因：
+- 没有网络
+- 防火墙拦截
+- npm registry 不可达
+
+修复：
+
+```bash
+# 确认当前 registry
+npm config get registry
+
+# 必要时切换
+npm config set registry https://registry.npmjs.org
+
+# 重试
+npm install -g @openclaw/cli
+```
+
+### 症状：找不到配置文件
+
+```bash
+openclaw start
+# Error: Cannot find config file: ./openclaw.config.json
+```
+
+修复：确认你在正确的目录执行命令：
+
+```bash
+ls openclaw.config.json
+# 如果文件不存在，切换到项目目录
+cd my-openclaw
+openclaw start
+```
+
+### 症状：配置文件 JSON 语法错误
+
+```bash
+openclaw start
+# SyntaxError: Unexpected token } in JSON at position 234
+```
+
+修复：验证 JSON 格式：
+
+```bash
+node -e "JSON.parse(require('fs').readFileSync('openclaw.config.json','utf8'))"
+# 没有输出 = JSON 格式正确
+# 有报错输出 = 注意报错位置，通常是多余的逗号或引号不匹配
+```
+
+## 模型层：常见问题与修复
+
+### 症状：API key 无效
+
+```bash
+openclaw start
+# [openclaw] Authenticating with OpenAI... FAILED
+# Error: 401 Unauthorized — invalid API key
+```
+
+排查：
+
+```bash
+# 确认环境变量已加载
+echo $OPENAI_API_KEY
+# 应该输出你的 key，不能是空行
+
+# 如果为空，检查 .env 文件
+cat .env
+# OPENAI_API_KEY=sk-your-key-here
+```
+
+常见原因：
+- 复制 key 时带入了多余的空格或换行
+- Key 已被撤销或过期
+- 用了 Anthropic 的 key，但 provider 配置的是 openai
+
+修复：在 provider 控制台确认 key 状态：
+- OpenAI: platform.openai.com → API Keys
+- Anthropic: console.anthropic.com → API Keys
+- Gemini: aistudio.google.com → API Keys
+
+### 症状：provider 配置和 key 不匹配
+
+```bash
+openclaw start
+# [openclaw] Provider: anthropic (claude-3-haiku)
+# [openclaw] Authenticating with Anthropic... FAILED
+# Error: Invalid API key format
+```
+
+确认 `openclaw.config.json` 里的 provider 和环境变量对应：
+
+```json
+{
+  "agent": {
+    "provider": "openai",
+    "model": "gpt-4o-mini"
+  }
+}
+```
+
+provider 是 `openai`，对应的环境变量是 `OPENAI_API_KEY`；provider 是 `anthropic`，对应的是 `ANTHROPIC_API_KEY`。
+
+### 症状：模型调用成功但回来是空
+
+```
+[openclaw] Model call completed (0 tokens)
+[openclaw] Warning: empty response from model
+```
+
+可能原因：
+- system prompt 文件路径配置错误，导致 prompt 内容为空
+- Provider 余额耗尽（部分 provider 会返回空而不是报错）
+
+排查：
+
+```bash
+# 确认 AGENTS.md 存在且有内容
+cat workspace/AGENTS.md
+
+# 确认配置路径正确
+node -e "const c=JSON.parse(require('fs').readFileSync('openclaw.config.json','utf8')); console.log(c.agent.systemPrompt)"
+# workspace/AGENTS.md
+```
+
+### 症状：模型调用超时
+
+```
+[openclaw] Calling model: openai/gpt-4o-mini...
+[openclaw] Error: Request timeout after 30000ms
+```
+
+可能原因：
+- 网络不稳定
+- 需要代理但未配置
+- Provider 服务暂时异常
+
+修复：用 curl 测试 API 端点的可达性：
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" https://api.openai.com/v1/models \
+  -H "Authorization: Bearer $OPENAI_API_KEY"
+# 200 = 网络通，key 有效
+# 401 = key 无效
+# 000 = 网络不可达
+```
+
+## 渠道层：常见问题与修复
+
+### 症状：消息发进去，机器人完全没反应
+
+按顺序检查：
+
+**1. 进程是否在运行？**
+
+```bash
+openclaw status
+# Status: running (PID: 12345) → 正常
+# Status: not running           → 需要启动
+```
+
+**2. Webhook 是否注册成功？（Telegram）**
+
+```bash
+curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo" | node -e "
+const d=require('fs').readFileSync('/dev/stdin','utf8');
+const r=JSON.parse(d).result;
+console.log('URL:', r.url || '(空)');
+console.log('Pending:', r.pending_update_count);
+console.log('Last error:', r.last_error_message || '(无)');
+"
+```
+
+正常输出：
+
+```
+URL: https://abcd1234.ngrok.io/webhook/telegram
+Pending: 0
+Last error: (无)
+```
+
+问题信号：
+
+```
+URL: (空)
+```
+
+→ Webhook 从未注册，重新执行 `setWebhook`。
+
+```
+Last error: Connection refused
+```
+
+→ OpenClaw 进程没在监听，或者 ngrok 隧道已断开。
+
+**3. 公网 URL 是否可达？**
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" https://abcd1234.ngrok.io/webhook/telegram
+# 200 或 404 = 公网可达（404 是路径问题，网络是通的）
+# 000 = 不可达，ngrok 可能已过期
+```
+
+如果 ngrok 已过期：
+
+```bash
+ngrok http 3000
+# 拿到新地址，重新注册 Webhook
+curl "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
+  -d "url=https://NEW-ADDRESS.ngrok.io/webhook/telegram"
+```
+
+### 症状：Telegram 返回 401 Unauthorized
+
+```
+Error: Telegram API error 401: Unauthorized
+```
+
+原因：bot token 填写错误或已被撤销。
+
+```bash
+echo $TELEGRAM_BOT_TOKEN
+# 确认格式：数字:字母数字组合
+# 例如：1234567890:AAFsomethingsomething_tokenstring
+```
+
+修复：从 BotFather 重新获取 token，更新 `.env`。
+
+### 症状：飞书事件推送验证失败
+
+```
+[feishu] Verification request failed: signature mismatch
+```
+
+原因：`encryptKey` 或 `verificationToken` 配置不正确。
+
+修复：进入飞书开放平台 → 事件与回调页面，复制正确的值到 `.env`：
+
+```bash
+FEISHU_ENCRYPT_KEY=正确的_encrypt_key
+FEISHU_VERIFICATION_TOKEN=正确的_verification_token
+```
+
+### 症状：飞书机器人加入群聊但不回复
+
+按顺序检查：
+
+1. 应用版本是否已发布？（飞书开放平台 → 版本管理与发布）
+2. 权限范围是否包含 `im:message` 和 `im:message:receive_v1`？
+3. 重新把机器人移出再加入群聊
+
+## 工作流层：常见问题与修复
+
+### 症状：机器人回复消息，但没有调用技能
+
+```bash
+openclaw start --log-level debug
+```
+
+在 debug 日志里搜索 `skill`：
+
+```
+[openclaw] Message received: "https://example.com"
+[openclaw] Router: no matching skill trigger
+[openclaw] Falling back to general agent response
+```
+
+→ 代理没有识别到这条输入应该触发技能。
+
+检查：
+- `openclaw.config.json` 的 `skills` 数组里技能是否已启用？
+- `AGENTS.md` 里的规则是否足够明确？（"当用户发送一个 URL 时"比"处理链接"清晰得多）
+
+健康的技能调用日志：
+
+```
+[openclaw] Message received: "https://example.com"
+[openclaw] Router: matched skill trigger → web-summary
+[openclaw] Skill invoked: web-summary
+[openclaw] Fetching URL: https://example.com
+[openclaw] Model call completed (347 tokens)
+[openclaw] Reply sent to channel
+```
+
+### 症状：技能调用了，但返回结果为空或报错
+
+```
+[openclaw] Skill invoked: web-summary
+[openclaw] Skill error: web-summary — unable to fetch page content
+```
+
+可能原因：
+- 页面需要登录（web-summary 只能抓取公开页面）
+- 页面有反爬虫保护
+- 网络连接问题
+
+修复：换一个最简单的公开页面测试：
+
+```
+https://example.com
+```
+
+如果 example.com 能成功，说明技能本身工作正常——是原来那个页面在拦截请求。
+
+### 症状：结果回来了，但格式不对
+
+期望：
+
+```
+**摘要**
+[摘要内容]
+
+**来源**：https://example.com
+**语言**：英语
+```
+
+实际收到的是一段没有格式的文字。
+
+原因：`AGENTS.md` 里的格式描述不够明确。
+
+修复：检查 `AGENTS.md` 里的模板部分：
+1. 格式描述是否精确？（代理需要明确指令，不能靠"应该简洁"这类措辞来猜）
+2. 有没有完整的格式样例？（代理需要看到实际模板才能准确复现）
+
+## 快速诊断表
+
+| 症状 | 先查这里 | 常见原因 |
+|------|---------|---------|
+| `command not found: openclaw` | `npm config get prefix` | npm 全局 bin 不在 PATH |
+| 启动时 `401 Unauthorized` | `echo $OPENAI_API_KEY` | API key 无效或未加载 |
+| 启动成功但机器人沉默 | `openclaw status` + `getWebhookInfo` | 进程未运行或 Webhook 未注册 |
+| 机器人有回复但技能没调用 | debug 日志，搜索 `skill` | 技能未启用或 AGENTS.md 规则不匹配 |
+| 技能调用了但返回空或报错 | debug 日志，看 `Skill error` | 页面不可抓取或网络问题 |
+| 输出格式不对 | 检查 AGENTS.md 模板 | 格式描述不够精确 |
+| JSON 配置解析报错 | `node -e "JSON.parse(...)"` | 多余逗号或引号不匹配 |
+| 模型调用超时 | curl 测试 API 端点 | 网络或代理配置问题 |
+
+## 日志：你最重要的排错工具
+
+### 查看实时日志
+
+```bash
+# 用 debug 日志级别启动
+openclaw start --log-level debug
+
+# 或在另一个终端追踪日志文件
+tail -f workspace/logs/openclaw.log
+```
+
+### 日志级别说明
+
+| 级别 | 含义 | 使用时机 |
+|------|------|---------|
+| `error` | 需要立即关注的硬错误 | 始终关注 |
+| `warn` | 潜在问题，不会立即崩溃 | 偶尔检查 |
+| `info` | 正常运行记录 | 默认级别 |
+| `debug` | 详细追踪，包含 API 请求细节 | 排错时开启 |
+
+### 健康检查
+
+```bash
+openclaw status
+```
+
+健康输出：
+
+```
+Status: running (PID: 12345)
+Uptime: 2m 34s
+Provider: openai
+Model: gpt-4o-mini
+Channels: 1 connected
+Skills: 1 loaded
+Workspace: ./workspace
+```
+
+如果 `Channels: 0 connected` 但你已配置渠道，说明渠道配置有问题。如果 `Skills: 0 loaded` 但你已添加技能，检查 `openclaw.config.json` 里的 `skills` 数组。
+
+## 四个最常见的新手误区
+
+### 1. 同时改多个变量
+
+一失败就同时改 prompt、模型、环境和技能，把唯一有价值的线索也一起改没了。
+
+**正确做法**：改一个变量，立刻重试。
+
+### 2. 过早下结论
+
+- 机器人沉默 → 认定是模型坏了（实际是 Webhook 没注册）
+- 模型报了一次错 → 认定是平台 bug（实际是 key 过期了）
+- 一个技能失败 → 认定整个系统不稳定（实际是页面有反爬虫）
+
+Quick Start 阶段，大多数问题只是链路没补齐。
+
+### 3. 把后台日志当成成功的标准
+
+看到后台显示 `connected` 就认为成功了。真正成功的标准只有一个：**你在真实聊天界面发出消息，机器人真的回了。**
+
+### 4. 渠道没通就开始扩展功能
+
+在渠道收发消息没跑通之前，加技能、改 prompt、换模型几乎没有意义。先确认消息能双向传递。
+
+## 排错记录模板
+
+每次排错都尽量留下这三条信息：
+
+```
+操作：[你做了什么]
+现象：[你看到了什么]
+变量：[你改了什么]
+```
+
+示例：
+
+```
+操作：向 Telegram 机器人发送 "hello"
+现象：等待 60 秒没有回复
+变量：无（第一次测试）
+
+操作：执行 openclaw status
+现象：Status: not running
+变量：无
+
+操作：执行 openclaw start
+现象：启动成功，重新发 hello，得到回复
+变量：重新启动了进程
+```
+
+这会极大减少"我好像试了很多，但忘了哪些真的试过"的混乱感。
+
+## 什么时候离开 Quick Start 排错阶段
+
+如果你已经能明确说出下面这种句子，就不要继续泛化排错了：
+
+- "进程是活的，但飞书消息收不到"
+- "渠道通了，但 provider 认证失败"
+- "基础对话能回，但 starter workflow 一触发就报错"
+- "同样的命令昨天能跑，今天只有某个技能失败"
+
+一旦症状足够具体，就应该进入对应的 **Troubleshoot** 路径，沿着匹配的恢复指南继续推进。Quick Start 的作用，是帮你从"完全没头绪"走到"我知道问题在哪一层"。
+
+## 更好的下一步
+
+当你已经能明确描述症状时，跳到 **Troubleshoot** 找对应的恢复指南。如果四层都查过了问题还在，去 **Learn** 加深对 OpenClaw 底层机制的理解。

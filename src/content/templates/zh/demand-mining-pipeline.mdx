@@ -1,0 +1,115 @@
+---
+locale: zh
+publishedAt: 2026-04-08
+updatedAt: 2026-04-08
+category: "调研分析"
+title: "需求挖掘自动化流水线"
+summary: "一条多步骤 cron 流水线：发现上升关键词、用社区信号验证、每天早上输出一份排好优先级的机会清单。"
+readingTime: "8 分钟"
+difficulty: "高级"
+time: "45 分钟"
+risk: "中风险"
+channels: [
+  "Telegram",
+  "邮件"
+]
+recommendedFor: "适合希望在确定方向之前，用一套可重复运行的系统持续发现未被满足需求的独立开发者或产品团队。"
+tags: [
+  "调研",
+  "自动化",
+  "流水线"
+]
+---
+## 什么时候用这个模板
+
+当你想要一套可重复运行的需求发现系统——不是一次性搜索，而是每天自动跑、在你确定方向之前持续浮出新机会的流水线。
+
+这条流水线最适合：内容站、SaaS 工具，或者任何自然搜索需求是重要信号的产品。如果你的市场完全靠关系驱动，或者关键词策略已经饱和，这个模板帮助不大。
+
+## 流水线怎么运作
+
+流水线分两条并行轨道，最终合并成一份排好优先级的 shortlist：
+
+```
+种子词
+  → 轨道 A：Google Trends（发现上升中的新表达）
+  → 轨道 B：关键词数据库（挖掘被低估的成熟词）
+  → 第一次合并
+
+  → 社区信号验证（HN、GitHub、Tavily）
+  → 桥接：社区词 → Trends 趋势验证
+  → 第二次合并
+
+  → SERP 竞争分析
+  → 最终分级 shortlist → 推送到渠道
+```
+
+每一步都在过滤和打分。到达你手里的结果，已经通过了多个独立信号的验证。
+
+## 最小配置
+
+**第一步：准备种子词**
+
+在 workspace 里创建 `seed_roots.json`，放入你的核心品类词。这些不是目标关键词，而是流水线扩展的根词：
+
+```json
+["ai generator", "ai detector", "ai editor", "ai writer", "ai summarizer"]
+```
+
+从 10–20 个根词开始。流水线会自动扩展每一个。
+
+**第二步：配置 cron 任务**
+
+在 `openclaw.json` 的 crons 部分加上：
+
+```json
+{
+  "name": "demand-mining-daily",
+  "schedule": { "kind": "cron", "expr": "0 7 * * *", "tz": "Asia/Shanghai" },
+  "payload": {
+    "kind": "agentTurn",
+    "message": "执行需求挖掘流水线。读取 seed_roots.json，用 Google Trends 和关键词数据扩展每个根词，用 HN 和 GitHub 信号验证 top 候选词，对入围词做 SERP 竞争分析，输出 10 个机会的排名 shortlist 到渠道。格式：关键词 | 月搜索量 | 趋势方向 | 竞争程度 | 为什么值得关注。",
+    "model": "sonnet"
+  },
+  "sessionTarget": "isolated",
+  "delivery": { "mode": "announce" }
+}
+```
+
+**第三步：安装所需技能**
+
+```bash
+clawhub install search-web
+clawhub install web-fetch
+clawhub install summarize
+```
+
+## 好的输出是什么样的
+
+好的每日 shortlist 两分钟内可以扫完。每条记录回答一个问题：这个值得深入研究吗？
+
+```
+📊 每日需求报告 — 4月8日
+
+1. "ai pdf summarizer" | 8,400/月 | ↑ +34% | KD: 18 | 缺口：没有专门工具排名靠前
+2. "local ai assistant mac" | 3,200/月 | ↑ +61% | KD: 12 | 缺口：排名靠前的都是泛化结果
+3. "ai meeting notes free" | 12,100/月 | → 稳定 | KD: 24 | 缺口：排名靠前的都要付费
+...
+```
+
+如果评估一条记录需要打开五个标签页，说明流水线过滤得不够。调紧评分阈值。
+
+## 评分阈值参考
+
+这是起始值，根据你的市场调整：
+
+| 信号 | 保留条件 | 过滤条件 |
+|------|---------|---------|
+| 月搜索量 | > 1,000 | < 500 |
+| 关键词难度 | < 30 | > 45 |
+| 趋势斜率 | 正向或稳定 | 下降 |
+| 社区提及（HN/GH） | 近 90 天内有 | 完全没有 |
+
+## 第一步扩展
+
+基础流水线稳定之后，加一个去重步骤：把今天的 shortlist 和 `seen_keywords.json` 文件对比，只浮出真正新的机会。这样可以防止同样的高搜索量词每天重复出现。

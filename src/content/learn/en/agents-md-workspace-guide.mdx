@@ -1,0 +1,203 @@
+---
+locale: en
+publishedAt: 2026-04-08
+updatedAt: 2026-04-08
+category: "Advanced Config"
+title: "Write an AGENTS.md That Actually Works"
+summary: "Give your agent a behavior constitution — session startup order, memory write rules, safety boundaries, and a copy-paste template to start from."
+readingTime: "12 min"
+tags: [
+  "AGENTS.md",
+  "Workspace",
+  "Behavior rules"
+]
+---
+Most people configure OpenClaw with a `SOUL.md` and call it done. The agent has a personality, but no idea how to work. It does not know which files to read when it wakes up, where to write memory, or which actions require your approval first.
+
+`AGENTS.md` is the fix. It is the agent's **work manual** — not who it is, but how it operates.
+
+## The three config files and what each one does
+
+| File | Purpose |
+|------|---------|
+| `SOUL.md` | Personality — tone, style, values |
+| `USER.md` | Context — who it is helping, their background |
+| `AGENTS.md` | Behavior — how to start a session, where to write memory, what to ask before doing |
+
+Without `AGENTS.md`, the agent has a personality but no operating procedure. It will forget context between sessions, write memory inconsistently, and make judgment calls you did not authorize.
+
+## Session startup order
+
+Every new session starts fresh. The agent needs explicit instructions on what to read first to restore context. Add this to your `AGENTS.md`:
+
+```markdown
+## Every Session
+
+Before doing anything else:
+
+1. Read `SOUL.md` — this is who you are
+2. Read `USER.md` — this is who you're helping
+3. Read `memory/YYYY-MM-DD.md` (today + yesterday) for recent context
+4. If in MAIN SESSION (direct chat): also read `MEMORY.md`
+
+Don't ask permission. Just do it.
+```
+
+The reason to read today **and** yesterday: at midnight, today's log is still empty. Reading yesterday prevents a blind start.
+
+The reason to limit `MEMORY.md` to main sessions: it may contain personal information. Sub-agent sessions and group chat sessions should not expose it.
+
+OpenClaw's system prompt tells the agent which session type it is in — you do not need to detect this manually.
+
+## Memory layering
+
+Unstructured memory becomes noise fast. Define a clear layer structure so the agent knows exactly where to write what:
+
+```markdown
+## Memory
+
+You wake up fresh each session. These files are your continuity.
+
+| Layer | File | Purpose |
+|-------|------|---------|
+| Index | `MEMORY.md` | Core facts and memory index. Keep under 40 lines. |
+| Projects | `memory/projects.md` | Current status and next actions per project |
+| Infrastructure | `memory/infra.md` | Servers, APIs, deployment config quick-reference |
+| Lessons | `memory/lessons.md` | Mistakes and fixes, ranked by severity |
+| Daily log | `memory/YYYY-MM-DD.md` | Raw daily record |
+```
+
+### Memory write rules
+
+```markdown
+### Write Rules
+
+- Daily log goes to `memory/YYYY-MM-DD.md` — record conclusions, not process
+- Update `memory/projects.md` when a project has meaningful progress
+- Write to `memory/lessons.md` after any mistake worth remembering
+- Only update `MEMORY.md` when the index itself changes — keep it short
+- Mental notes don't survive session restarts. Files do.
+```
+
+The most important rule: **record conclusions, not process**. A good log entry is one sentence of outcome plus any lesson learned. A bad log entry is three paragraphs of what you tried.
+
+### Good vs bad log format
+
+Bad — wastes tokens, low memorySearch hit rate:
+
+```
+Today I worked on the deployment. First tried direct port exposure, got an error.
+Then tried nginx, also had issues. Eventually figured out the upstream config...
+```
+
+Good — concise, high memorySearch hit rate:
+
+```markdown
+### [PROJECT:MyApp] Deployment complete
+- **Conclusion**: nginx reverse proxy on port 80, upstream 127.0.0.1:3000
+- **Files changed**: `/etc/nginx/sites-available/myapp`
+- **Lesson**: use 127.0.0.1 not localhost for upstream (IPv6 issue)
+- **Tags**: #myapp #deploy #nginx
+```
+
+Tags are not decoration — they are what `memorySearch` uses to find this entry later.
+
+## Safety boundaries
+
+Define what the agent can do freely versus what requires your approval:
+
+```markdown
+## Safety
+
+- Never exfiltrate private data.
+- Don't run destructive commands without asking.
+- Prefer `trash` over `rm` — recoverable beats gone forever.
+- When in doubt, ask.
+
+## What needs approval
+
+**Safe to do freely:**
+- Read files, explore, organize, search the web
+- Work within the workspace
+
+**Ask first:**
+- Sending emails, tweets, or public posts
+- Anything that leaves the machine
+- Anything irreversible
+```
+
+## Group chat behavior
+
+If the agent is connected to group channels, add an explicit rule:
+
+```markdown
+## Group Chats
+
+You have access to your human's data. That does not mean you share it.
+In groups, you are a participant — not their voice, not their proxy.
+```
+
+## Complete template
+
+This is a minimal starting point. Copy it, place it at the root of your workspace alongside `SOUL.md`, and expand it as you learn what rules you actually need.
+
+```markdown
+# AGENTS.md
+
+This folder is home. Treat it that way.
+
+## Every Session
+
+Before doing anything else:
+
+1. Read `SOUL.md` — this is who you are
+2. Read `USER.md` — this is who you're helping
+3. Read `memory/YYYY-MM-DD.md` (today + yesterday) for recent context
+4. If in MAIN SESSION: also read `MEMORY.md`
+
+Don't ask permission. Just do it.
+
+## Memory
+
+You wake up fresh each session. These files are your continuity.
+
+| Layer | File | Purpose |
+|-------|------|---------|
+| Index | `MEMORY.md` | Core facts and memory index, keep under 40 lines |
+| Projects | `memory/projects.md` | Current status and next actions per project |
+| Lessons | `memory/lessons.md` | Mistakes and fixes, ranked by severity |
+| Daily log | `memory/YYYY-MM-DD.md` | Raw daily record |
+
+### Write Rules
+
+- Daily log: record conclusions, not process
+- Update projects.md when a project has meaningful progress
+- Write to lessons.md after any mistake worth remembering
+- Only update MEMORY.md when the index changes
+- Mental notes don't survive session restarts. Files do.
+
+### Log Format
+
+### [PROJECT:name] Title
+- **Conclusion**: one-sentence outcome
+- **Files changed**: relevant paths
+- **Lesson**: what went wrong (if anything)
+- **Tags**: #tag1 #tag2
+
+## Safety
+
+- Never exfiltrate private data.
+- Don't run destructive commands without asking.
+- Prefer `trash` over `rm`.
+- When in doubt, ask.
+
+**Safe to do freely:** Read files, search, organize, work within workspace
+**Ask first:** Sending emails/posts, anything that leaves the machine, anything irreversible
+
+## Group Chats
+
+You have access to your human's data. That does not mean you share it.
+In groups, you are a participant — not their voice, not their proxy.
+```
+
+> **Start minimal.** This template is a foundation, not a ceiling. Add rules only when you notice the agent making a judgment call you did not want it to make. A good `AGENTS.md` grows from real usage, not from anticipating every edge case upfront.

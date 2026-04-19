@@ -1,0 +1,38 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Permissions & integrations"
+title: "External tool friction blocks value"
+summary: "OpenClaw itself works, but the surrounding toolchain makes the workflow too fragile to trust."
+symptom: "OpenClaw itself works, but the surrounding toolchain makes the workflow too fragile to trust."
+readingTime: "4 min"
+tags: []
+checks: [
+  "Reduce the workflow to one primary destination",
+  "Choose a simpler handoff format",
+  "Prove value in one integration before scaling out"
+]
+commonCauses: [
+  "Too many connected tools",
+  "Each tool adds its own auth or formatting edge cases",
+  "No stable handoff format between tools"
+]
+ctaLabel: "Continue"
+ctaHref: "/learn/"
+---
+## What this symptom usually means
+
+The core system may be healthy, but the surrounding stack is too complex. Too many tools, each with their own edge cases, create fragility faster than value.
+
+## First recovery loop
+
+Reduce the workflow to one primary destination and one simple handoff format. If that works, the problem is not OpenClaw itself.
+
+## What to verify next
+
+Map out where authentication, formatting, or routing complexity is being introduced. The weakest integration usually sets the reliability ceiling.
+
+## If the issue persists
+
+Prove value in one integration before scaling out. Reliability comes from fewer moving parts, not more adapters.

@@ -1,0 +1,362 @@
+---
+locale: zh
+publishedAt: 2026-04-11
+updatedAt: 2026-04-11
+step: "02"
+title: "部署 / 安装"
+summary: "优先选择最短验证路径，而不是第一次就追求完整架构。"
+readingTime: "14 分钟"
+bullets: [
+  "还在摸索阶段时，优先本地安装。",
+  "先接入一个模型服务，并尽早验证凭证。",
+  "在基础健康检查通过前，不要继续叠加可选服务。"
+]
+tags: []
+---
+第一次安装的目标，不是把 OpenClaw 打造成完美生产环境，而是先确认它**真的能启动、能调用模型、能留下排错证据**。只要这三件事成立，安装阶段就算合格。
+
+## 什么叫"够用了"
+
+对新手来说，一套"够用"的安装，至少要能回答下面三个问题：
+
+- 进程能不能正常启动？
+- 一个模型服务能不能认证成功？
+- 出错时能不能看到日志？
+
+如果这三件事都能确认，就已经足够进入下一步。后面的多渠道、多技能、远程网关、自动任务，都应该建立在这个基础上。
+
+## 安装前的最低准备
+
+在跑任何命令之前，先确认这几件事：
+
+### 系统要求
+
+| 要求 | 最低版本 | 推荐版本 |
+|------|---------|---------|
+| Node.js | 18.x | 20.x LTS |
+| npm | 8.x | 随 Node.js 附带 |
+| 操作系统 | macOS / Linux / Windows WSL2 | Linux 或 macOS |
+
+检查你的 Node.js 版本：
+
+```bash
+node --version
+# 应该输出 v18.x.x 或更高
+npm --version
+# 应该输出 8.x.x 或更高
+```
+
+如果版本不够，推荐用 [nvm](https://github.com/nvm-sh/nvm) 安装并切换版本：
+
+```bash
+nvm install 20
+nvm use 20
+node --version  # v20.x.x
+```
+
+### 模型提供商凭证
+
+安装前，你需要一个可用的模型 API key。OpenClaw 支持多个 provider，第一次建议选一个最容易获取 key 的：
+
+| Provider | 环境变量 | 获取地址 |
+|----------|---------|---------|
+| OpenAI | `OPENAI_API_KEY` | platform.openai.com |
+| Anthropic | `ANTHROPIC_API_KEY` | console.anthropic.com |
+| Gemini | `GOOGLE_API_KEY` | aistudio.google.com |
+
+先只准备一个，不要同时接多个 provider——出错了分不清是谁的问题。
+
+## 安装步骤（本地推荐路径）
+
+第一次安装优先选本地，原因很简单：本地最容易观察日志、最容易重启、最容易排错。
+
+### 第一步：安装 CLI
+
+```bash
+npm install -g @openclaw/cli
+```
+
+安装完成后，验证命令是否可用：
+
+```bash
+openclaw --version
+# 输出示例：openclaw/0.x.x darwin-arm64 node-v20.x.x
+```
+
+如果提示 `command not found`，说明 npm 全局路径没有加入 `PATH`。运行下面的命令找到路径后手动添加：
+
+```bash
+npm config get prefix
+# 输出类似：/usr/local
+# 将 /usr/local/bin 添加到你的 PATH
+```
+
+### 第二步：初始化工作区
+
+选一个你想放项目的目录，运行初始化命令：
+
+```bash
+mkdir my-openclaw && cd my-openclaw
+openclaw init
+```
+
+`init` 会交互式地问你几个问题：
+
+```
+? Project name: my-openclaw
+? Default language model provider: OpenAI
+? OpenAI API Key: sk-...（直接粘贴，不会显示）
+? Create default workspace files? Yes
+```
+
+初始化完成后，目录结构应该是这样的：
+
+```
+my-openclaw/
+├── openclaw.config.json   # 主配置文件
+├── workspace/
+│   ├── AGENTS.md          # 代理行为规则
+│   └── logs/              # 运行日志目录
+└── skills/                # 自定义技能目录（初始为空）
+```
+
+### 第三步：检查配置文件
+
+打开 `openclaw.config.json`，确认关键字段是否正确：
+
+```json
+{
+  "version": "1",
+  "agent": {
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "systemPrompt": "workspace/AGENTS.md"
+  },
+  "workspace": {
+    "root": "./workspace"
+  },
+  "channels": [],
+  "skills": []
+}
+```
+
+> `model` 字段用 `gpt-4o-mini` 而不是 `gpt-4o`。在验证阶段用便宜模型，节省额度，逻辑通了再换更强的模型。
+
+### 第四步：设置环境变量
+
+不要把 API key 直接写进配置文件。推荐用 `.env` 文件管理：
+
+```bash
+# 在项目目录下创建 .env
+echo 'OPENAI_API_KEY=sk-你的key' > .env
+```
+
+同时把 `.env` 加入 `.gitignore`，避免提交到 git：
+
+```bash
+echo '.env' >> .gitignore
+```
+
+如果你偏好直接设置 shell 环境变量：
+
+```bash
+# macOS / Linux（临时，当前终端有效）
+export OPENAI_API_KEY=sk-你的key
+
+# 永久写入（bash）
+echo 'export OPENAI_API_KEY=sk-你的key' >> ~/.bashrc
+
+# 永久写入（zsh）
+echo 'export OPENAI_API_KEY=sk-你的key' >> ~/.zshrc
+```
+
+### 第五步：启动服务并验证
+
+```bash
+openclaw start
+```
+
+健康的启动日志应该类似这样：
+
+```
+[openclaw] Starting OpenClaw v0.x.x
+[openclaw] Loading config: ./openclaw.config.json
+[openclaw] Workspace: ./workspace
+[openclaw] Provider: openai (gpt-4o-mini)
+[openclaw] Authenticating with OpenAI... OK
+[openclaw] No channels configured — running in CLI mode
+[openclaw] Ready. Type a message or press Ctrl+C to exit.
+```
+
+关键信号：
+- `Authenticating with ... OK` → 模型凭证有效
+- `Ready.` → 进程正常运行
+
+### 第六步：最小功能验证
+
+服务启动后，发一条最短的测试消息：
+
+```bash
+openclaw chat "hello"
+# 或在交互模式下直接输入
+```
+
+预期输出：
+
+```
+[agent] Hello! How can I help you today?
+```
+
+只要你看到模型回了消息，安装链路就是通的。
+
+## 日志：建立可观测性
+
+在任何排错之前，先知道日志在哪。
+
+### 实时日志
+
+```bash
+# 带详细日志启动
+openclaw start --log-level debug
+
+# 或查看日志文件（另开一个终端）
+tail -f workspace/logs/openclaw.log
+```
+
+### 日志级别说明
+
+| 级别 | 含义 | 建议 |
+|------|------|------|
+| `error` | 需要立刻处理的错误 | 默认关注 |
+| `warn` | 可能有问题但未崩溃 | 偶尔检查 |
+| `info` | 正常运行记录 | 默认级别 |
+| `debug` | 详细追踪，包含 API 请求 | 排错时开启 |
+
+### 健康检查
+
+另开一个终端，检查进程是否存活：
+
+```bash
+openclaw status
+```
+
+输出示例：
+
+```
+Status: running (PID: 12345)
+Uptime: 2m 34s
+Provider: openai
+Model: gpt-4o-mini
+Channels: 0 connected
+Skills: 0 loaded
+Workspace: ./workspace
+```
+
+## 安装阶段最该避免的 4 件事
+
+| 避免 | 原因 |
+|------|------|
+| 第一次就上远程部署 | 网络和权限问题会大幅增加排错难度 |
+| 同时接多个 provider | 出错时分不清是哪个 provider 的问题 |
+| 安装还没验证就批量装技能 | 基础链路不通，技能排错没有意义 |
+| 看到报错就连续改多个变量 | 会让你失去"到底哪步才有用"的判断基准 |
+
+## 遇到安装报错时，先判断是哪一层
+
+大多数安装问题都属于下面四层之一：
+
+### 环境层报错
+
+```
+Error: Unsupported Node.js version. Required: >=18, found: 16.x
+```
+
+解决：升级 Node.js。用 `nvm install 20 && nvm use 20`。
+
+```
+command not found: openclaw
+```
+
+解决：npm 全局路径未加入 PATH。找到 `npm config get prefix` 的输出，把 `/bin` 追加后加入 `PATH`。
+
+### 网络层报错
+
+```
+Error: ECONNREFUSED — failed to connect to registry
+npm ERR! network request failed
+```
+
+解决：检查网络连接，或配置 npm 镜像：
+
+```bash
+npm config set registry https://registry.npmmirror.com
+```
+
+### 凭证层报错
+
+```
+Error: 401 Unauthorized — invalid API key
+AuthenticationError: Incorrect API key provided
+```
+
+解决：检查 `.env` 文件中的 key 是否复制完整，是否有多余空格，以及 key 是否已过期或被撤销。
+
+```bash
+# 验证环境变量是否正确加载
+echo $OPENAI_API_KEY
+# 应该输出你的 key，不应该是空
+```
+
+### 配置层报错
+
+```
+Error: Cannot find config file: ./openclaw.config.json
+SyntaxError: Unexpected token in JSON
+```
+
+解决：确认你在正确的目录下运行命令，并用 JSON 校验工具检查配置文件格式。
+
+```bash
+# 检查当前目录
+ls openclaw.config.json
+
+# 校验 JSON 格式
+node -e "JSON.parse(require('fs').readFileSync('openclaw.config.json','utf8'))"
+# 没有输出 = 格式正确
+```
+
+## 部署到服务器（进阶，跑通本地后再做）
+
+本地验证通过后，如果需要 24 小时运行，可以部署到服务器。推荐用 pm2 管理进程：
+
+```bash
+# 安装 pm2
+npm install -g pm2
+
+# 启动 OpenClaw 并由 pm2 管理
+pm2 start "openclaw start" --name openclaw
+
+# 设置开机自启
+pm2 startup
+pm2 save
+
+# 查看日志
+pm2 logs openclaw
+
+# 查看状态
+pm2 status
+```
+
+pm2 会在进程崩溃时自动重启，并保留最近的日志。
+
+> 不要在本地还没跑通的情况下跳到服务器部署。服务器上调试的成本是本地的 3 到 5 倍。
+
+## 新手最常见的误区
+
+很多人会把 setup 当成架构设计题，在第一个有用工作流出现之前，就花大量时间优化环境、切换部署方式、讨论最佳实践。结果是安装投入很多，系统价值却还没被证明。
+
+**正确的优先级**：先让它在本地跑起来并且能回消息，其他的都是第二步。
+
+## 更好的下一步
+
+当基础环境能稳定启动后，就进入**接通一个聊天渠道**。因为"能启动"只说明后端活着；"能收到消息并回消息"，才说明你开始拥有一条真正可用的工作链路。

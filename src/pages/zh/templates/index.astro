@@ -10,19 +10,23 @@ const entries = await getLocalizedCollection("templates", locale);
 const categories = getUniqueCategories(entries);
 ---
 
-<BaseLayout active="templates" description="模板库模板页。" locale={locale} path="/templates/" title="Templates | AnyPlaybook">
+<BaseLayout active="templates" description="按工作目标组织的 OpenClaw 起步模板库，覆盖简报、协作、调研、监控和内容生产。" locale={locale} path="/templates/" title="Templates | OpenClaw101">
   <PageHero
     className="page-hero hero-single"
+    ctas={[
+      { href: "#templates-directory", label: "按工作目标浏览", variant: "primary" },
+      { href: localizePath("/#quick-start", locale), label: "先回看 Quick Start", variant: "secondary" },
+    ]}
     highlights={[
-      `${entries.length} 个模板示例`,
-      "已带难度与耗时标记",
-      "双语详情页可直接复用",
+      `${entries.length} 个起步模板`,
+      "包含难度、耗时、风险和渠道建议",
+      "覆盖信息简报、内容生产、团队协作、调研和监控",
     ]}
     kicker="TEMPLATE LIBRARY"
-    summary="按实际目标组织的工作流模板，并附带难度、耗时和风险提示。"
-    title="从一个可复用工作流开始。"
+    summary="把 Templates 当成一个可落地的起点目录：从信息简报、内容生产、团队协作、调研分析、监控告警到中文生态工作流，都按工作目标组织起来。"
+    title="按工作目标组织的起步模板库。"
   />
-  <div class="filter-rail" data-filter-group="templates">
+  <div class="filter-rail" data-filter-group="templates" id="templates-directory">
     <button class="filter-button is-active" data-filter="all" type="button">全部分类</button>
     {categories.map((category) => (
       <button class="filter-button" data-filter={category} type="button">{category}</button>
@@ -31,7 +35,7 @@ const categories = getUniqueCategories(entries);
   <div class="grid cols-3">
     {entries.map((entry) => (
       <div data-filter-item={entry.data.category}>
-        <ArticleCard eyebrow={`${entry.data.difficulty} · ${entry.data.time}`} href={localizePath(`/templates/${getRouteSlug(entry)}/`, locale)} summary={entry.data.summary} title={entry.data.title} />
+        <ArticleCard eyebrow={`${entry.data.difficulty} · ${entry.data.time}`} href={localizePath(`/templates/${getRouteSlug(entry)}/`, locale)} locale={locale} summary={entry.data.summary} title={entry.data.title} />
       </div>
     ))}
   </div>

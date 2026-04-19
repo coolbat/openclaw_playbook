@@ -1,0 +1,38 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Bot not responding"
+title: "Channel loop is broken"
+summary: "Messages reach the channel, but nothing actionable comes back."
+symptom: "Messages reach the channel, but nothing actionable comes back."
+readingTime: "4 min"
+tags: []
+checks: [
+  "Verify bot presence in the target channel",
+  "Send one plain test message",
+  "Confirm the event reaches OpenClaw logs"
+]
+commonCauses: [
+  "Channel pairing incomplete",
+  "Webhook/event listener missing",
+  "Test message sent to the wrong target"
+]
+ctaLabel: "Continue"
+ctaHref: "/learn/"
+---
+## What this symptom usually means
+
+If messages clearly reach the channel but nothing useful returns, the failure is often in the event loop rather than in model quality. Treat it as a routing and pairing problem first.
+
+## First recovery loop
+
+Start with one plain message, one target channel, and one known bot identity. You want to prove that the event enters OpenClaw and that OpenClaw attempts to respond.
+
+## What to verify next
+
+Confirm that the bot is present in the right place, that the listener is active, and that the event is visible in logs. If those three checks fail, do not jump to prompt or workflow changes yet.
+
+## If the issue persists
+
+Compare the failing setup with a known-good starter channel. A clean comparison usually exposes whether the problem is routing, permissions, or the wrong target destination.

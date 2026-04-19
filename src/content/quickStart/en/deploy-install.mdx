@@ -1,0 +1,359 @@
+---
+locale: en
+publishedAt: 2026-04-11
+updatedAt: 2026-04-11
+step: "02"
+title: "Deploy / Install"
+summary: "Take the shortest validation path first, not the most complete architecture."
+readingTime: "14 min"
+bullets: [
+  "Start local if you are still learning the system.",
+  "Use one model provider first and verify credentials early.",
+  "Do not add optional services before a basic health check passes."
+]
+tags: []
+---
+The goal of your first install is not a perfect production environment. It is to confirm that OpenClaw **actually starts, can call a model, and leaves enough evidence to debug**. Once those three things are true, installation is done.
+
+## What "good enough" means
+
+For a first install, "good enough" means you can answer these three questions:
+
+- Does the process start cleanly?
+- Does at least one model provider authenticate successfully?
+- Can you see logs when something goes wrong?
+
+Once those are confirmed, move on. Multi-channel setups, skill libraries, remote gateways, and scheduled tasks all belong on top of this foundation — not before it.
+
+## Minimum requirements before you run anything
+
+### System requirements
+
+| Requirement | Minimum | Recommended |
+|-------------|---------|-------------|
+| Node.js | 18.x | 20.x LTS |
+| npm | 8.x | bundled with Node.js |
+| OS | macOS / Linux / Windows WSL2 | Linux or macOS |
+
+Check your versions:
+
+```bash
+node --version
+# should print v18.x.x or higher
+npm --version
+# should print 8.x.x or higher
+```
+
+If the version is too low, install and switch with [nvm](https://github.com/nvm-sh/nvm):
+
+```bash
+nvm install 20
+nvm use 20
+node --version  # v20.x.x
+```
+
+### Model provider credentials
+
+You need one working API key before you install. OpenClaw supports multiple providers — pick the one that is easiest for you to get a key from:
+
+| Provider | Environment variable | Where to get it |
+|----------|---------------------|-----------------|
+| OpenAI | `OPENAI_API_KEY` | platform.openai.com |
+| Anthropic | `ANTHROPIC_API_KEY` | console.anthropic.com |
+| Gemini | `GOOGLE_API_KEY` | aistudio.google.com |
+
+Pick one. Do not set up multiple providers yet — if something breaks, you want to know exactly which one caused it.
+
+## Installation steps (recommended local path)
+
+Start local. Local is easiest to observe, easiest to restart, and easiest to debug.
+
+### Step 1: install the CLI
+
+```bash
+npm install -g @openclaw/cli
+```
+
+Verify the command is available:
+
+```bash
+openclaw --version
+# example output: openclaw/0.x.x darwin-arm64 node-v20.x.x
+```
+
+If you get `command not found`, the npm global bin directory is not in your `PATH`. Find it and add it:
+
+```bash
+npm config get prefix
+# prints something like /usr/local
+# add /usr/local/bin to your PATH
+```
+
+### Step 2: initialize a workspace
+
+Pick a directory and run:
+
+```bash
+mkdir my-openclaw && cd my-openclaw
+openclaw init
+```
+
+`init` asks a few interactive questions:
+
+```
+? Project name: my-openclaw
+? Default language model provider: OpenAI
+? OpenAI API Key: sk-...  (input hidden)
+? Create default workspace files? Yes
+```
+
+After it finishes, your directory should look like this:
+
+```
+my-openclaw/
+├── openclaw.config.json   # main config file
+├── workspace/
+│   ├── AGENTS.md          # agent behavior rules
+│   └── logs/              # runtime logs
+└── skills/                # custom skills (empty for now)
+```
+
+### Step 3: check the config file
+
+Open `openclaw.config.json` and confirm the key fields look right:
+
+```json
+{
+  "version": "1",
+  "agent": {
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "systemPrompt": "workspace/AGENTS.md"
+  },
+  "workspace": {
+    "root": "./workspace"
+  },
+  "channels": [],
+  "skills": []
+}
+```
+
+> Use `gpt-4o-mini` rather than `gpt-4o` during setup. Use the cheaper model while verifying the chain. Switch to a more capable model once the loop is confirmed working.
+
+### Step 4: set your environment variables
+
+Do not put API keys directly in the config file. Use a `.env` file:
+
+```bash
+echo 'OPENAI_API_KEY=sk-your-key-here' > .env
+```
+
+Add `.env` to `.gitignore` so it does not get committed:
+
+```bash
+echo '.env' >> .gitignore
+```
+
+If you prefer shell environment variables:
+
+```bash
+# macOS / Linux (temporary, current terminal only)
+export OPENAI_API_KEY=sk-your-key-here
+
+# Permanent (bash)
+echo 'export OPENAI_API_KEY=sk-your-key-here' >> ~/.bashrc
+
+# Permanent (zsh)
+echo 'export OPENAI_API_KEY=sk-your-key-here' >> ~/.zshrc
+```
+
+### Step 5: start the service and verify
+
+```bash
+openclaw start
+```
+
+A healthy startup log looks like this:
+
+```
+[openclaw] Starting OpenClaw v0.x.x
+[openclaw] Loading config: ./openclaw.config.json
+[openclaw] Workspace: ./workspace
+[openclaw] Provider: openai (gpt-4o-mini)
+[openclaw] Authenticating with OpenAI... OK
+[openclaw] No channels configured — running in CLI mode
+[openclaw] Ready. Type a message or press Ctrl+C to exit.
+```
+
+Key signals to look for:
+- `Authenticating with ... OK` → credentials are valid
+- `Ready.` → process is running normally
+
+### Step 6: minimum functional check
+
+Send the shortest possible test message:
+
+```bash
+openclaw chat "hello"
+# or type directly in interactive mode
+```
+
+Expected output:
+
+```
+[agent] Hello! How can I help you today?
+```
+
+If the model replied, the installation chain is working.
+
+## Logs: establishing observability
+
+Know where the logs are before you need them.
+
+### Live logs
+
+```bash
+# start with verbose logging
+openclaw start --log-level debug
+
+# or tail the log file in a separate terminal
+tail -f workspace/logs/openclaw.log
+```
+
+### Log level reference
+
+| Level | Meaning | When to use |
+|-------|---------|-------------|
+| `error` | Something that needs immediate attention | Always watch |
+| `warn` | Potential issue, not yet a crash | Check occasionally |
+| `info` | Normal operation records | Default level |
+| `debug` | Detailed trace including API requests | Enable when debugging |
+
+### Health check
+
+In a separate terminal:
+
+```bash
+openclaw status
+```
+
+Example output:
+
+```
+Status: running (PID: 12345)
+Uptime: 2m 34s
+Provider: openai
+Model: gpt-4o-mini
+Channels: 0 connected
+Skills: 0 loaded
+Workspace: ./workspace
+```
+
+## Four things to avoid during installation
+
+| Avoid | Why |
+|-------|-----|
+| Remote deployment on the first try | Network and permission issues multiply debugging cost |
+| Setting up multiple providers at once | If it breaks, you will not know which one caused it |
+| Installing skills before the base chain is verified | Skills debugging is meaningless if the core loop is broken |
+| Changing multiple variables when you see an error | You lose the ability to tell which change actually helped |
+
+## When you hit an error: identify the layer first
+
+Most install errors belong to one of these four layers.
+
+### Environment layer
+
+```
+Error: Unsupported Node.js version. Required: >=18, found: 16.x
+```
+
+Fix: upgrade Node.js. Use `nvm install 20 && nvm use 20`.
+
+```
+command not found: openclaw
+```
+
+Fix: npm global bin is not in `PATH`. Run `npm config get prefix`, append `/bin` to the output, and add that path to your `PATH`.
+
+### Network layer
+
+```
+Error: ECONNREFUSED — failed to connect to registry
+npm ERR! network request failed
+```
+
+Fix: check your network connection. Or switch to a mirror registry:
+
+```bash
+npm config set registry https://registry.npmjs.org
+```
+
+### Credentials layer
+
+```
+Error: 401 Unauthorized — invalid API key
+AuthenticationError: Incorrect API key provided
+```
+
+Fix: check that the key in your `.env` is copied correctly — no trailing spaces, no line breaks. Verify the key is still active in your provider dashboard.
+
+```bash
+# check the variable is actually loaded
+echo $OPENAI_API_KEY
+# should print your key, not empty
+```
+
+### Configuration layer
+
+```
+Error: Cannot find config file: ./openclaw.config.json
+SyntaxError: Unexpected token in JSON
+```
+
+Fix: confirm you are running the command from the right directory. Validate the JSON format:
+
+```bash
+# check the file exists
+ls openclaw.config.json
+
+# validate JSON syntax
+node -e "JSON.parse(require('fs').readFileSync('openclaw.config.json','utf8'))"
+# no output = valid JSON
+```
+
+## Deploying to a server (do this after local is verified)
+
+Once local is working, if you need it running 24/7, deploy to a server. Use pm2 to manage the process:
+
+```bash
+# install pm2
+npm install -g pm2
+
+# start OpenClaw under pm2
+pm2 start "openclaw start" --name openclaw
+
+# enable auto-restart on reboot
+pm2 startup
+pm2 save
+
+# view logs
+pm2 logs openclaw
+
+# check status
+pm2 status
+```
+
+pm2 restarts the process automatically on crash and retains recent logs.
+
+> Do not jump to a server before local is verified. Debugging on a remote server costs 3–5× more time than debugging locally.
+
+## Common beginner mistake
+
+Many people treat setup as an architecture problem. Before the first useful workflow exists, they spend hours optimizing the environment, switching deployment strategies, and debating best practices. The result: a lot of setup effort with zero validated value.
+
+**The right priority**: get it running locally and responding to messages. Everything else is step two.
+
+## A better next move
+
+Once the base environment starts cleanly, move to **connecting a chat channel**. "It starts" only proves the backend is alive. "It receives a message and replies" proves you have an actual working loop.

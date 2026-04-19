@@ -1,0 +1,37 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Setup"
+title: "Local vs VPS: Pick the First Path"
+summary: "Use a simple decision frame to decide whether you should start locally or deploy remotely."
+readingTime: "9 min"
+tags: [
+  "Setup",
+  "Local",
+  "VPS"
+]
+---
+## Start from speed of verification
+
+Your first environment should help you answer one question quickly: can the system complete one real loop? For most beginners, local setup wins because you can see logs faster and change fewer moving parts at once.
+
+## Choose local when
+
+- you are still learning the basic components
+- you want fast iteration and easy resets
+- the workflow does not need continuous uptime yet
+
+## Choose VPS when
+
+- the workflow needs to stay online
+- channel integration depends on a stable remote endpoint
+- you already understand the basic local setup
+
+> **Do not optimize too early**
+>   The wrong VPS setup is slower than a simple local setup. Prove the workflow
+> locally if uptime is not yet part of the requirement.
+
+## A practical sequence
+
+Start local, validate one provider and one channel, then move remote only when the workflow clearly benefits from always-on execution.

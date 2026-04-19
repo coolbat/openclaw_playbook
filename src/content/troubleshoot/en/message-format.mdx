@@ -1,0 +1,38 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Bot not responding"
+title: "Input path is too noisy"
+summary: "The bot sometimes replies, but first-run tests are unreliable and hard to compare."
+symptom: "The bot sometimes replies, but first-run tests are unreliable and hard to compare."
+readingTime: "3 min"
+tags: []
+checks: [
+  "Retry with a one-line instruction",
+  "Remove attachments and rich formatting",
+  "Compare against a known-good starter flow"
+]
+commonCauses: [
+  "Testing with a complex prompt too early",
+  "Multiple skills mixed in one message",
+  "Channel formatting interfering with parsing"
+]
+ctaLabel: "Continue"
+ctaHref: "/learn/"
+---
+## What this symptom usually means
+
+Sometimes the system is not broken. The test itself is too complex. Rich formatting, attachments, and mixed instructions make it hard to tell what failed first.
+
+## First recovery loop
+
+Retry with one clean sentence, no attachments, and one clear intent. Treat this as a controlled experiment rather than a full workflow rehearsal.
+
+## What to verify next
+
+Check whether a simple instruction succeeds consistently. If it does, the next problem is probably in how the request is packaged rather than in the core system.
+
+## If the issue persists
+
+Compare against a known starter workflow and note the first meaningful difference. That usually gives you a better hypothesis than reading logs cold.

@@ -6,7 +6,7 @@ import QuickStartCard from "@/components/QuickStartCard.astro";
 import ArticleCard from "@/components/ArticleCard.astro";
 import { adsConfig, isAdSlotEnabled } from "@/config/ads";
 import { homeConfig } from "@/config/home";
-import { getLocalizedCollection, getRouteSlug } from "@/lib/content";
+import { getLocalizedCollection, getRouteSlug, sortByPublication } from "@/lib/content";
 import { localizePath } from "@/lib/i18n";
 
 const locale = "zh";
@@ -14,9 +14,9 @@ const quickStart = await getLocalizedCollection("quickStart", locale);
 const learnEntries = await getLocalizedCollection("learn", locale);
 const templateEntries = await getLocalizedCollection("templates", locale);
 const troubleshootEntries = await getLocalizedCollection("troubleshoot", locale);
-const learn = learnEntries.slice(0, 3);
-const templates = templateEntries.slice(0, 3);
-const troubleshoot = troubleshootEntries.slice(0, 3);
+const learn = sortByPublication(learnEntries).slice(0, 3);
+const templates = sortByPublication(templateEntries).slice(0, 3);
+const troubleshoot = sortByPublication(troubleshootEntries).slice(0, 3);
 const homeAd = adsConfig.slots.home_between_sections.content.zh;
 ---
 
@@ -25,18 +25,20 @@ const homeAd = adsConfig.slots.home_between_sections.content.zh;
   description={homeConfig.hero.summary.zh}
   locale={locale}
   path="/"
-  title="AnyPlaybook | 教程站模板"
+  title="OpenClaw101 | OpenClaw 教程"
 >
   <PageHero
     className="hero"
     ctas={[
-      { href: "#quick-start", label: "进入 5 步 Quick Start", variant: "primary" },
-      { href: localizePath("/learn/", locale), label: "浏览 Learn", variant: "secondary" },
+      { href: "#quick-start", label: "开始 5 步路径", variant: "primary" },
+      { href: localizePath("/learn/", locale), label: "补强基础认知", variant: "secondary" },
+      { href: localizePath("/troubleshoot/", locale), label: "首次运行失败？", variant: "link" },
     ]}
     highlights={[
-      "内置中英双语路由",
-      "深浅色与语言切换就绪",
-      "内容集合结构已整理",
+      "5 个串联步骤指南",
+      "从认知建立到第一个有用工作流的一条主路径",
+      "渠道 + 结果 + 恢复路径",
+      "首次失败时知道下一步去哪里",
     ]}
     kicker={homeConfig.hero.kicker}
     summary={homeConfig.hero.summary.zh}
@@ -48,7 +50,7 @@ const homeAd = adsConfig.slots.home_between_sections.content.zh;
     <SectionHeading title={homeConfig.quickStartIntro.title.zh} summary={homeConfig.quickStartIntro.summary.zh} />
     <div class="grid cols-2">
       {quickStart.map((entry) => (
-        <QuickStartCard entry={entry.data} href={localizePath(`/quick-start/${getRouteSlug(entry)}/`, locale)} />
+        <QuickStartCard entry={entry.data} href={localizePath(`/quick-start/${getRouteSlug(entry)}/`, locale)} locale={locale} />
       ))}
     </div>
   </section>
@@ -65,6 +67,7 @@ const homeAd = adsConfig.slots.home_between_sections.content.zh;
         <ArticleCard
           eyebrow={entry.data.category}
           href={localizePath(`/learn/${getRouteSlug(entry)}/`, locale)}
+          locale={locale}
           summary={entry.data.summary}
           title={entry.data.title}
         />
@@ -97,6 +100,7 @@ const homeAd = adsConfig.slots.home_between_sections.content.zh;
         <ArticleCard
           eyebrow={`${entry.data.difficulty} · ${entry.data.time}`}
           href={localizePath(`/templates/${getRouteSlug(entry)}/`, locale)}
+          locale={locale}
           summary={entry.data.summary}
           title={entry.data.title}
         />
@@ -116,6 +120,7 @@ const homeAd = adsConfig.slots.home_between_sections.content.zh;
         <ArticleCard
           eyebrow={entry.data.symptom}
           href={localizePath(`/troubleshoot/${getRouteSlug(entry)}/`, locale)}
+          locale={locale}
           summary={entry.data.summary}
           title={entry.data.title}
         />

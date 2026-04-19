@@ -1,0 +1,37 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Briefings"
+title: "Incident Summary Brief"
+summary: "Turn raw alert context into a readable summary for stakeholders after an incident starts."
+readingTime: "4 min"
+difficulty: "Intermediate"
+time: "18 min"
+risk: "Medium risk"
+channels: [
+  "Slack",
+  "Feishu"
+]
+recommendedFor: "Ops or platform teams that need fast internal communication during incidents."
+tags: [
+  "Incident",
+  "Summary",
+  "Ops"
+]
+---
+## When to use this template
+
+Use this when an incident is already in progress and stakeholders need readable context quickly. It is not a replacement for engineering diagnosis. It is a communication layer around diagnosis.
+
+## Minimal setup
+
+Start with one alert source, one log or status input, and one destination channel. The first version should focus on summarizing the incident, not automating every update step.
+
+## What good output looks like
+
+The summary should explain what happened, what systems are affected, and what the current response state is. Readers should understand the situation without reading raw logs.
+
+## First extension
+
+Add a second pass that turns follow-up updates into a timeline. That keeps later summaries consistent when the incident lasts longer than one short loop.

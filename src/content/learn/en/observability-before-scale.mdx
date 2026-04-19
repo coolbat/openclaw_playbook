@@ -1,0 +1,36 @@
+---
+locale: en
+publishedAt: 2026-03-18
+updatedAt: 2026-03-18
+category: "Skills & Workflow Design"
+title: "Observability Before Scale"
+summary: "Add logs, checkpoints, and inspection points before you add more channels or more automation."
+readingTime: "8 min"
+tags: [
+  "Observability",
+  "Logs",
+  "Scale"
+]
+---
+## Scale hides mistakes
+
+When you add more channels or more tasks before visibility is in place, small failures become hard to locate. You do not need enterprise observability to start. You need enough checkpoints to know where the workflow stopped behaving as expected.
+
+## Minimum useful visibility
+
+- a visible trigger event
+- a visible model response or transformed output
+- a visible delivery step
+- an error surface you can inspect later
+
+## Why this matters early
+
+Observability is what lets you tell the difference between:
+
+- model weakness
+- bad prompt framing
+- broken integration
+- missing permissions
+
+> **Do this before expansion**
+>   Add one inspection point before you add one more workflow branch.
